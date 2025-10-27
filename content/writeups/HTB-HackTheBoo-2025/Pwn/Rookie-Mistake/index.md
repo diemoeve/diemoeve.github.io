@@ -3,6 +3,7 @@ title: "HackTheBoo CTF 2025 | Pwn: Rookie Mistake [easy]"
 date: 2025-10-27
 summary: "HackTheBoo 2025 CTF Pwn — Rookie-Mistake"
 description: "Abusing a padding-only overflow to pivot main's return address onto the hidden win stub and pop a remote shell for the flag."
+weight: 10
 tags:
   - HackTheBox
   - HackTheBoo 2025

@@ -3,6 +3,7 @@ title: "HackTheBoo CTF 2025 | Crypto: Leaking for Answers [easy]"
 date: 2025-10-27
 summary: "HackTheBoo 2025 Crypto — Leaking for Answers"
 description: "Automating four RSA mini-challenges exposed through different leaks to recover the flag from a remote oracle."
+weight: 10
 tags:
   - HackTheBox
   - HackTheBoo 2025
@@ -189,4 +190,3 @@ pow(q, -p, p) = 4285282739568952408643894964147796977343309293998978474945144002
 The keeper bows. You have answered all his tests.
 HTB{t0_l34k___0r_n0t___t0_l34k_f0r_4nsw3rs_0af9ea5217203e9f59e7a04b75191755}
 ```
-

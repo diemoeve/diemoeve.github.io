@@ -3,6 +3,7 @@ title: "HackTheBoo CTF 2025 | Crypto: Sign and Run [medium]"
 date: 2025-10-27
 summary: "HackTheBoo 2025 Crypto — Sign and Run"
 description: "Reverse-engineering the Iron Scribe service and brute-forcing its 32-bit CRC seal to recover the flag."
+weight: 20
 tags:
   - HackTheBox
   - HackTheBoo 2025

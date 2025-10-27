@@ -3,6 +3,7 @@ title: "HackTheBoo CTF 2025 | Pwn: Rookie Salvation [medium]"
 date: 2025-10-27
 summary: "HackTheBoo 2025 CTF Pwn — Rookie Salvation"
 description: "Reclaiming a freed heap chunk via tcache to rewrite the secret key and unlock the salvation path for the flag."
+weight: 20
 tags:
   - HackTheBox
   - HackTheBoo 2025
@@ -159,4 +160,3 @@ python3 exploit.py
 [+] HTB{h34p_2_h34v3n}
 [*] Closed connection to 209.38.254.18 port 31337
 ```
-
