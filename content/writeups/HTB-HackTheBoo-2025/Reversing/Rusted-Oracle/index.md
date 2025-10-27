@@ -1,5 +1,5 @@
 ---
-title: "HackTheBoo CTF 2025 | Rev: Rusted Oracle [medium]"
+title: "HackTheBoo CTF 2025 | Rev: Rusted Oracle [easy]"
 date: 2025-10-27
 summary: "HackTheBoo 2025 Reverse — Rusted Oracle"
 description: "Reverse-engineering a 64-bit ELF to replicate a bitwise transform over QWORD constants and recover the flag."
@@ -211,4 +211,3 @@ Output:
 ```
 HTB{sk1pP1nG-C4ll$!!1!}
 ```
-

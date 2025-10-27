@@ -1,5 +1,5 @@
 ---
-title: "HackTheBoo CTF 2025 | Rev: Digital Alchemy [easy]"
+title: "HackTheBoo CTF 2025 | Rev: Digital Alchemy [medium]"
 date: 2025-10-27
 summary: "HackTheBoo 2025 Reverse — Digital Alchemy"
 description: "Reverse-engineering an ELF to transmute lead into a flag using a two-stage transform and an LCG-driven nibble XOR."
