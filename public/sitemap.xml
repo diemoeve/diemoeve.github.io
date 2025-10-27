@@ -2,82 +2,82 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
   xmlns:xhtml="http://www.w3.org/1999/xhtml">
   <url>
-    <loc>http://localhost:1313/categories/</loc>
+    <loc>https://diemoeve.github.io/categories/</loc>
     <lastmod>2025-10-27T00:00:00+00:00</lastmod>
   </url><url>
-    <loc>http://localhost:1313/categories/crypto/</loc>
+    <loc>https://diemoeve.github.io/categories/crypto/</loc>
     <lastmod>2025-10-27T00:00:00+00:00</lastmod>
   </url><url>
-    <loc>http://localhost:1313/tags/cryptography/</loc>
+    <loc>https://diemoeve.github.io/tags/cryptography/</loc>
     <lastmod>2025-10-27T00:00:00+00:00</lastmod>
   </url><url>
-    <loc>http://localhost:1313/tags/elf/</loc>
+    <loc>https://diemoeve.github.io/tags/elf/</loc>
     <lastmod>2025-10-27T00:00:00+00:00</lastmod>
   </url><url>
-    <loc>http://localhost:1313/tags/gdb/</loc>
+    <loc>https://diemoeve.github.io/tags/gdb/</loc>
     <lastmod>2025-10-27T00:00:00+00:00</lastmod>
   </url><url>
-    <loc>http://localhost:1313/categories/hacktheboo-2025/</loc>
+    <loc>https://diemoeve.github.io/categories/hacktheboo-2025/</loc>
     <lastmod>2025-10-27T00:00:00+00:00</lastmod>
   </url><url>
-    <loc>http://localhost:1313/tags/hacktheboo-2025/</loc>
+    <loc>https://diemoeve.github.io/tags/hacktheboo-2025/</loc>
     <lastmod>2025-10-27T00:00:00+00:00</lastmod>
   </url><url>
-    <loc>http://localhost:1313/writeups/writeups/hacktheboo-ctf-2025-crypto-leaking-for-answers-easy/</loc>
+    <loc>https://diemoeve.github.io/writeups/writeups/hacktheboo-ctf-2025-crypto-leaking-for-answers-easy/</loc>
     <lastmod>2025-10-27T00:00:00+00:00</lastmod>
   </url><url>
-    <loc>http://localhost:1313/writeups/writeups/hacktheboo-ctf-2025-crypto-sign-and-run-medium/</loc>
+    <loc>https://diemoeve.github.io/writeups/writeups/hacktheboo-ctf-2025-crypto-sign-and-run-medium/</loc>
     <lastmod>2025-10-27T00:00:00+00:00</lastmod>
   </url><url>
-    <loc>http://localhost:1313/writeups/writeups/hacktheboo-ctf-2025-pwn-rookie-mistake-easy/</loc>
+    <loc>https://diemoeve.github.io/writeups/writeups/hacktheboo-ctf-2025-pwn-rookie-mistake-easy/</loc>
     <lastmod>2025-10-27T00:00:00+00:00</lastmod>
   </url><url>
-    <loc>http://localhost:1313/writeups/writeups/hacktheboo-ctf-2025-pwn-rookie-salvation-medium/</loc>
+    <loc>https://diemoeve.github.io/writeups/writeups/hacktheboo-ctf-2025-pwn-rookie-salvation-medium/</loc>
     <lastmod>2025-10-27T00:00:00+00:00</lastmod>
   </url><url>
-    <loc>http://localhost:1313/writeups/writeups/hacktheboo-ctf-2025-rev-digital-alchemy-easy/</loc>
+    <loc>https://diemoeve.github.io/writeups/writeups/hacktheboo-ctf-2025-rev-digital-alchemy-easy/</loc>
     <lastmod>2025-10-27T00:00:00+00:00</lastmod>
   </url><url>
-    <loc>http://localhost:1313/writeups/writeups/hacktheboo-ctf-2025-rev-rusted-oracle-medium/</loc>
+    <loc>https://diemoeve.github.io/writeups/writeups/hacktheboo-ctf-2025-rev-rusted-oracle-medium/</loc>
     <lastmod>2025-10-27T00:00:00+00:00</lastmod>
   </url><url>
-    <loc>http://localhost:1313/tags/hackthebox/</loc>
+    <loc>https://diemoeve.github.io/tags/hackthebox/</loc>
     <lastmod>2025-10-27T00:00:00+00:00</lastmod>
   </url><url>
-    <loc>http://localhost:1313/tags/heap-exploitation/</loc>
+    <loc>https://diemoeve.github.io/tags/heap-exploitation/</loc>
     <lastmod>2025-10-27T00:00:00+00:00</lastmod>
   </url><url>
-    <loc>http://localhost:1313/</loc>
+    <loc>https://diemoeve.github.io/</loc>
     <lastmod>2025-10-27T00:00:00+00:00</lastmod>
   </url><url>
-    <loc>http://localhost:1313/categories/pwn/</loc>
+    <loc>https://diemoeve.github.io/categories/pwn/</loc>
     <lastmod>2025-10-27T00:00:00+00:00</lastmod>
   </url><url>
-    <loc>http://localhost:1313/tags/pwn/</loc>
+    <loc>https://diemoeve.github.io/tags/pwn/</loc>
     <lastmod>2025-10-27T00:00:00+00:00</lastmod>
   </url><url>
-    <loc>http://localhost:1313/tags/python/</loc>
+    <loc>https://diemoeve.github.io/tags/python/</loc>
     <lastmod>2025-10-27T00:00:00+00:00</lastmod>
   </url><url>
-    <loc>http://localhost:1313/tags/ret2win/</loc>
+    <loc>https://diemoeve.github.io/tags/ret2win/</loc>
     <lastmod>2025-10-27T00:00:00+00:00</lastmod>
   </url><url>
-    <loc>http://localhost:1313/categories/reverse/</loc>
+    <loc>https://diemoeve.github.io/categories/reverse/</loc>
     <lastmod>2025-10-27T00:00:00+00:00</lastmod>
   </url><url>
-    <loc>http://localhost:1313/tags/reverse-engineering/</loc>
+    <loc>https://diemoeve.github.io/tags/reverse-engineering/</loc>
     <lastmod>2025-10-27T00:00:00+00:00</lastmod>
   </url><url>
-    <loc>http://localhost:1313/tags/rsa/</loc>
+    <loc>https://diemoeve.github.io/tags/rsa/</loc>
     <lastmod>2025-10-27T00:00:00+00:00</lastmod>
   </url><url>
-    <loc>http://localhost:1313/tags/</loc>
+    <loc>https://diemoeve.github.io/tags/</loc>
     <lastmod>2025-10-27T00:00:00+00:00</lastmod>
   </url><url>
-    <loc>http://localhost:1313/writeups/</loc>
+    <loc>https://diemoeve.github.io/writeups/</loc>
     <lastmod>2025-10-27T00:00:00+00:00</lastmod>
   </url><url>
-    <loc>http://localhost:1313/tags/x86_64/</loc>
+    <loc>https://diemoeve.github.io/tags/x86_64/</loc>
     <lastmod>2025-10-27T00:00:00+00:00</lastmod>
   </url>
 </urlset>
