@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html><head lang="en"><script src="/livereload.js?mindelay=10&amp;v=2&amp;port=1313&amp;path=livereload" data-no-instant defer></script>
+	<meta charset="utf-8" />
+	<meta http-equiv="X-UA-Compatible" content="IE=edge"><title>HackTheBoo CTF 2025 | Rev: Rusted Oracle [medium] - moeve&#39;s blog</title><link rel="icon" type="image/x-icon" href="/favicon2.8f68632c487952c29fd770f908f1910c2adc7ffbb78ffd0c71771bca8c5b71e1.ico" /><meta name="viewport" content="width=device-width, initial-scale=1">
+	<meta name="description" content="Reverse-engineering a 64-bit ELF to replicate a bitwise transform over QWORD constants and recover the flag." />
+	<meta property="og:image" content=""/>
+	<script>
+	(function () {
+		var storageKey = 'theme';
+		var classList = document.documentElement.classList;
+		var storedTheme = null;
+		try {
+			storedTheme = window.localStorage.getItem(storageKey);
+		} catch (err) {
+			storedTheme = null;
+		}
+		var prefersDark = false;
+		try {
+			prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+		} catch (err) {
+			prefersDark = false;
+		}
+		var theme = (storedTheme === 'dark' || storedTheme === 'light') ? storedTheme : (prefersDark ? 'dark' : 'light');
+		if (theme === 'dark') {
+			classList.add('dark');
+		} else {
+			classList.remove('dark');
+		}
+	})();
+	</script>
+	<script type="module" src="http://localhost:1313/js/theme-toggle.js" defer></script>
+	<meta property="og:url" content="http://localhost:1313/writeups/writeups/hacktheboo-ctf-2025-rev-rusted-oracle-medium/">
+  <meta property="og:site_name" content="moeve&#39;s blog">
+  <meta property="og:title" content="HackTheBoo CTF 2025 | Rev: Rusted Oracle [medium]">
+  <meta property="og:description" content="Reverse-engineering a 64-bit ELF to replicate a bitwise transform over QWORD constants and recover the flag.">
+  <meta property="og:locale" content="en_us">
+  <meta property="og:type" content="article">
+    <meta property="article:section" content="writeups">
+    <meta property="article:published_time" content="2025-10-27T00:00:00+00:00">
+    <meta property="article:modified_time" content="2025-10-27T00:00:00+00:00">
+    <meta property="article:tag" content="HackTheBox">
+    <meta property="article:tag" content="HackTheBoo 2025">
+    <meta property="article:tag" content="Reverse Engineering">
+    <meta property="article:tag" content="ELF">
+    <meta property="article:tag" content="X86_64">
+    <meta property="article:tag" content="GDB">
+
+  <meta name="twitter:card" content="summary">
+  <meta name="twitter:title" content="HackTheBoo CTF 2025 | Rev: Rusted Oracle [medium]">
+  <meta name="twitter:description" content="Reverse-engineering a 64-bit ELF to replicate a bitwise transform over QWORD constants and recover the flag.">
+
+        <link href="http://localhost:1313/css/fonts.2c2227b81b1970a03e760aa2e6121cd01f87c88586803cbb282aa224720a765f.css" rel="stylesheet">
+	
+
+	
+	<link rel="stylesheet" type="text/css" media="screen" href="http://localhost:1313/css/main.7a5c05040394322612a2d98397e9932aa81d9d7acc70199463e79f8180c8e0c0.css" />
+		
+		
+		<link rel="stylesheet" type="text/css" href="http://localhost:1313/css/custom.07f912777db42e88a413bca7f38a722b56303b2914ca91d86ae3341cccc44ed5.css">
+		
+</head>
+<body>
+        <div class="content"><header>
+	<div class="main">
+		<a href="http://localhost:1313/">moeve&#39;s blog</a>
+	</div>
+	<nav>
+		
+		<a href="/">Home</a>
+		
+		<a href="/writeups/">Writeups</a>
+		
+		<a href="/tags/">Tags</a>
+		
+		<button id="theme-toggle" class="theme-toggle" type="button" aria-label="Switch to dark mode" aria-pressed="false">
+			<svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+				<path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+			</svg>
+			<svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+				<circle cx="12" cy="12" r="5"></circle>
+				<line x1="12" y1="1" x2="12" y2="3"></line>
+				<line x1="12" y1="21" x2="12" y2="23"></line>
+				<line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+				<line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+				<line x1="1" y1="12" x2="3" y2="12"></line>
+				<line x1="21" y1="12" x2="23" y2="12"></line>
+				<line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+				<line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+			</svg>
+		</button>
+	</nav>
+</header>
+
+<main>
+  <article>
+    <div class="post-container">
+      
+      <div class="post-content">
+        <div class="title">
+          <h1 class="title">HackTheBoo CTF 2025 | Rev: Rusted Oracle [medium]</h1>
+          <div class="meta">Posted on Oct 27, 2025</div>
+        </div>
+        
+        <section class="body">
+          <p>An ancient machine, a relic from a forgotten civilization, could be the key to defeating the Hollow King. However, the gears have ground almost to a halt. Can you restore the decrepit mechanism?</p>
+<h2 id="step-1-explore-the-challenge-files">Step 1: Explore the Challenge Files</h2>
+<p>List contents and identify the target binary.</p>
+<pre tabindex="0"><code>file rusted_oracle
+</code></pre><p>Findings:</p>
+<ul>
+<li><code>rusted_oracle</code>: 64-bit PIE ELF, dynamically linked, not stripped.</li>
+</ul>
+<h2 id="step-2-baseline-runtime-behavior">Step 2: Baseline Runtime Behavior</h2>
+<p>Run the binary to see prompts and interaction.</p>
+<pre tabindex="0"><code>./rusted_oracle
+printf &#39;test\n&#39; | ./rusted_oracle
+</code></pre><p>Output snippet:</p>
+<pre tabindex="0"><code>A forgotten machine still ticks beneath the stones.
+Its gears grind against centuries of rust.
+
+[ a stranger approaches, and the machine asks for their name ]
+&gt; [ the machine falls silent ]
+</code></pre><p>Observation: It asks for a name, then falls silent if the input is wrong.</p>
+<h2 id="step-3-static-recon-for-hints">Step 3: Static Recon for Hints</h2>
+<p>Look for embedded strings and constants.</p>
+<pre tabindex="0"><code>strings -a rusted_oracle | head -n 50
+objdump -s -j .rodata rusted_oracle
+</code></pre><p>Interesting <code>.rodata</code> excerpt:</p>
+<pre tabindex="0"><code>Contents of section .rodata:
+ 2000 01000200 4f6e2061 20727573 74656420  ....On a rusted 
+ 2010 706c6174 652c2066 61696e74 206c6574  plate, faint let
+ 2020 74657273 20726576 65616c20 7468656d  ters reveal them
+ 2030 73656c76 65733a20 25730a00 4120666f  selves: %s..A fo
+ ...
+ 20e0 00726561 6400436f 7277696e 2056656c  .read.Corwin Vel
+ 20f0 6c005b20 74686520 67656172 73206265  l.[ the gears be
+ 2100 67696e20 746f2074 75726e2e 2e2e2073  gin to turn... s
+ 2110 6c6f776c 792e2e2e 205d0a00 5b207468  lowly... ]..[ th
+</code></pre><p>The name <code>Corwin Vell</code> appears near other UI text, suggesting a magic input.</p>
+<h2 id="step-4-disassemble-control-flow">Step 4: Disassemble Control Flow</h2>
+<p>Disassemble <code>main</code> to confirm the check and follow-on logic.</p>
+<pre tabindex="0"><code>gdb -batch -ex &#39;file rusted_oracle&#39; -ex &#39;disassemble main&#39;
+</code></pre><p>Key points from <code>main</code>:</p>
+<ul>
+<li>Reads up to 0x3f bytes into a 0x40 buffer, trims trailing newline.</li>
+<li><code>strcmp(input, CONST_AT_0x20E6)</code> — if zero, prints &ldquo;[ the gears begin to turn&hellip; ]&rdquo; and calls <code>machine_decoding_sequence</code>.</li>
+<li>Else prints a failure message and exits.</li>
+</ul>
+<p>Given the <code>.rodata</code> placement, the expected name is <code>Corwin Vell</code>.</p>
+<h2 id="step-5-analyze-the-decoding-routine">Step 5: Analyze the Decoding Routine</h2>
+<p>Disassemble the function that prints the final message.</p>
+<pre tabindex="0"><code>gdb -batch -ex &#39;file rusted_oracle&#39; -ex &#39;disassemble machine_decoding_sequence&#39;
+</code></pre><p>Pseudo-logic reconstructed from the assembly (loop over 24 QWORDs at <code>enc = 0x4050</code>):</p>
+<pre tabindex="0"><code>for i in range(24):
+    v = enc[i]
+    v ^= 0x524e
+    v = ror64(v, 1)
+    v ^= 0x5648
+    v = rol64(v, 7)
+    v &gt;&gt;= 8
+    out[i] = v &amp; 0xff
+print(&#34;On a rusted plate, faint letters reveal themselves: %s&#34; % out)
+</code></pre><p>Dump the <code>enc</code> array from memory:</p>
+<pre tabindex="0"><code>gdb -batch -ex &#39;file rusted_oracle&#39; -ex &#39;x/24gx 0x4050&#39;
+</code></pre><p>Resulting QWORDs:</p>
+<pre tabindex="0"><code>0x000000000000fffe
+0x000000000000ff8e
+0x000000000000ffd6
+0x000000000000ff32
+0x000000000000ff12
+0x000000000000ff72
+0x000000000000fe1a
+0x000000000000ff1e
+0x000000000000ff9e
+0x000000000000fe1a
+0x000000000000ff66
+0x000000000000ffc2
+0x000000000000fe6a
+0x000000000000ffd2
+0x000000000000fe0e
+0x000000000000ff6e
+0x000000000000ff6e
+0x000000000000fe4e
+0x000000000000fe5a
+0x000000000000fe5a
+0x000000000000fe1a
+0x000000000000fe5a
+0x000000000000ff2a
+0x0000000000000000
+</code></pre><h2 id="step-6-recreate-the-transform-and-recover-the-flag">Step 6: Recreate the Transform and Recover the Flag</h2>
+<p>Implement the exact bitwise pipeline in Python and run it over the constants. A trailing padding byte is discarded.</p>
+<p>Create the decoder:</p>
+<pre tabindex="0"><code>ENC_VALUES = [
+    0x000000000000fffe,
+    0x000000000000ff8e,
+    0x000000000000ffd6,
+    0x000000000000ff32,
+    0x000000000000ff12,
+    0x000000000000ff72,
+    0x000000000000fe1a,
+    0x000000000000ff1e,
+    0x000000000000ff9e,
+    0x000000000000fe1a,
+    0x000000000000ff66,
+    0x000000000000ffc2,
+    0x000000000000fe6a,
+    0x000000000000ffd2,
+    0x000000000000fe0e,
+    0x000000000000ff6e,
+    0x000000000000ff6e,
+    0x000000000000fe4e,
+    0x000000000000fe5a,
+    0x000000000000fe5a,
+    0x000000000000fe1a,
+    0x000000000000fe5a,
+    0x000000000000ff2a,
+    0x0000000000000000,
+]
+
+MASK64 = 0xFFFFFFFFFFFFFFFF
+
+def decode(values):
+    out = []
+    for v in values:
+        v ^= 0x524E
+        v = ((v &gt;&gt; 1) | ((v &amp; 1) &lt;&lt; 63)) &amp; MASK64  # ror 1
+        v ^= 0x5648
+        v = ((v &lt;&lt; 7) &amp; MASK64) | (v &gt;&gt; (64 - 7))  # rol 7
+        v &gt;&gt;= 8
+        out.append(v &amp; 0xFF)
+    return bytes(out[:-1])
+
+if __name__ == &#39;__main__&#39;:
+    print(decode(ENC_VALUES).decode(&#39;ascii&#39;))
+PY
+</code></pre><pre tabindex="0"><code>python3 exploit.py
+</code></pre><p>Output:</p>
+<pre tabindex="0"><code>HTB{sk1pP1nG-C4ll$!!1!}
+</code></pre>
+        </section>
+        <div class="post-tags">
+          
+          
+          <nav class="nav tags">
+            <ul class="tags">
+              
+              <li><a href="/tags/hackthebox">HackTheBox</a></li>
+              
+              <li><a href="/tags/hacktheboo-2025">HackTheBoo 2025</a></li>
+              
+              <li><a href="/tags/reverse-engineering">Reverse Engineering</a></li>
+              
+              <li><a href="/tags/elf">ELF</a></li>
+              
+              <li><a href="/tags/x86_64">x86_64</a></li>
+              
+              <li><a href="/tags/gdb">GDB</a></li>
+              
+            </ul>
+          </nav>
+          
+          
+        </div>
+      </div>
+
+      
+      
+    </div>
+
+    </article>
+</main>
+<footer>
+  <div style="display:flex"></div>
+  <div class="footer-info">
+    © 2025 moeve · Theme based on <a href="https://github.com/athul/archie">Archie</a> (MIT)
+  </div>
+</footer>
+
+</div>
+    </body>
+</html>

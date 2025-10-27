@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>GDB on moeve&#39;s blog</title>
+    <link>http://localhost:1313/tags/gdb/</link>
+    <description>Recent content in GDB on moeve&#39;s blog</description>
+    <generator>Hugo</generator>
+    <language>en-us</language>
+    <lastBuildDate>Mon, 27 Oct 2025 00:00:00 +0000</lastBuildDate>
+    <atom:link href="http://localhost:1313/tags/gdb/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>HackTheBoo CTF 2025 | Rev: Rusted Oracle [medium]</title>
+      <link>http://localhost:1313/writeups/writeups/hacktheboo-ctf-2025-rev-rusted-oracle-medium/</link>
+      <pubDate>Mon, 27 Oct 2025 00:00:00 +0000</pubDate>
+      <guid>http://localhost:1313/writeups/writeups/hacktheboo-ctf-2025-rev-rusted-oracle-medium/</guid>
+      <description>HackTheBoo 2025 Reverse — Rusted Oracle</description>
+    </item>
+  </channel>
+</rss>

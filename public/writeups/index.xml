@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Writeups on moeve&#39;s blog</title>
+    <link>http://localhost:1313/writeups/</link>
+    <description>Recent content in Writeups on moeve&#39;s blog</description>
+    <generator>Hugo</generator>
+    <language>en-us</language>
+    <lastBuildDate>Mon, 27 Oct 2025 00:00:00 +0000</lastBuildDate>
+    <atom:link href="http://localhost:1313/writeups/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>HackTheBoo CTF 2025 | Crypto: Leaking for Answers [easy]</title>
+      <link>http://localhost:1313/writeups/writeups/hacktheboo-ctf-2025-crypto-leaking-for-answers-easy/</link>
+      <pubDate>Mon, 27 Oct 2025 00:00:00 +0000</pubDate>
+      <guid>http://localhost:1313/writeups/writeups/hacktheboo-ctf-2025-crypto-leaking-for-answers-easy/</guid>
+      <description>HackTheBoo 2025 Crypto — Leaking for Answers</description>
+    </item>
+    <item>
+      <title>HackTheBoo CTF 2025 | Crypto: Sign and Run [medium]</title>
+      <link>http://localhost:1313/writeups/writeups/hacktheboo-ctf-2025-crypto-sign-and-run-medium/</link>
+      <pubDate>Mon, 27 Oct 2025 00:00:00 +0000</pubDate>
+      <guid>http://localhost:1313/writeups/writeups/hacktheboo-ctf-2025-crypto-sign-and-run-medium/</guid>
+      <description>HackTheBoo 2025 Crypto — Sign and Run</description>
+    </item>
+    <item>
+      <title>HackTheBoo CTF 2025 | Pwn: Rookie Mistake [easy]</title>
+      <link>http://localhost:1313/writeups/writeups/hacktheboo-ctf-2025-pwn-rookie-mistake-easy/</link>
+      <pubDate>Mon, 27 Oct 2025 00:00:00 +0000</pubDate>
+      <guid>http://localhost:1313/writeups/writeups/hacktheboo-ctf-2025-pwn-rookie-mistake-easy/</guid>
+      <description>HackTheBoo 2025 CTF Pwn — Rookie-Mistake</description>
+    </item>
+    <item>
+      <title>HackTheBoo CTF 2025 | Pwn: Rookie Salvation [medium]</title>
+      <link>http://localhost:1313/writeups/writeups/hacktheboo-ctf-2025-pwn-rookie-salvation-medium/</link>
+      <pubDate>Mon, 27 Oct 2025 00:00:00 +0000</pubDate>
+      <guid>http://localhost:1313/writeups/writeups/hacktheboo-ctf-2025-pwn-rookie-salvation-medium/</guid>
+      <description>HackTheBoo 2025 CTF Pwn — Rookie Salvation</description>
+    </item>
+    <item>
+      <title>HackTheBoo CTF 2025 | Rev: Digital Alchemy [easy]</title>
+      <link>http://localhost:1313/writeups/writeups/hacktheboo-ctf-2025-rev-digital-alchemy-easy/</link>
+      <pubDate>Mon, 27 Oct 2025 00:00:00 +0000</pubDate>
+      <guid>http://localhost:1313/writeups/writeups/hacktheboo-ctf-2025-rev-digital-alchemy-easy/</guid>
+      <description>HackTheBoo 2025 Reverse — Digital Alchemy</description>
+    </item>
+    <item>
+      <title>HackTheBoo CTF 2025 | Rev: Rusted Oracle [medium]</title>
+      <link>http://localhost:1313/writeups/writeups/hacktheboo-ctf-2025-rev-rusted-oracle-medium/</link>
+      <pubDate>Mon, 27 Oct 2025 00:00:00 +0000</pubDate>
+      <guid>http://localhost:1313/writeups/writeups/hacktheboo-ctf-2025-rev-rusted-oracle-medium/</guid>
+      <description>HackTheBoo 2025 Reverse — Rusted Oracle</description>
+    </item>
+  </channel>
+</rss>

