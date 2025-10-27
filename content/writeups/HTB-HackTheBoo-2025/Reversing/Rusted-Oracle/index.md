@@ -3,7 +3,6 @@ title: "HackTheBoo CTF 2025 | Rev: Rusted Oracle [easy]"
 date: 2025-10-27
 summary: "HackTheBoo 2025 Reverse — Rusted Oracle"
 description: "Reverse-engineering a 64-bit ELF to replicate a bitwise transform over QWORD constants and recover the flag."
-weight: 10
 tags:
   - HackTheBox
   - HackTheBoo 2025

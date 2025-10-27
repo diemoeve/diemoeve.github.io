@@ -6,8 +6,7 @@
 {{ end }}
 
 {{ $pages := where .Data.Pages "Params.hidden" "ne" true }}
-{{ $sortedByDate := sort $pages "Date" "desc" }}
-{{ $sorted := sort $sortedByDate "Params.weight" }}
+{{ $sorted := sort $pages "Title" }}
 
 <ul class="posts">
 	{{- range $sorted -}}

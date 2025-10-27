@@ -3,7 +3,6 @@ title: "HackTheBoo CTF 2025 | Crypto: Leaking for Answers [easy]"
 date: 2025-10-27
 summary: "HackTheBoo 2025 Crypto — Leaking for Answers"
 description: "Automating four RSA mini-challenges exposed through different leaks to recover the flag from a remote oracle."
-weight: 10
 tags:
   - HackTheBox
   - HackTheBoo 2025

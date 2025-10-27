@@ -13,8 +13,7 @@
 				</div>
 				{{ $pages := where .Site.RegularPages "Type" "in" .Site.Params.mainSections }}
 				{{ $visible := where $pages "Params.hidden" "ne" true }}
-				{{ $sortedByDate := sort $visible "Date" "desc" }}
-				{{ $sorted := sort $sortedByDate "Params.weight" }}
+				{{ $sorted := sort $visible "Title" }}
 				{{ range $sorted }}
 				<section class="list-item">
 					<h1 class="title"><a href="{{ .RelPermalink }}">{{ .Title }}</a></h1>

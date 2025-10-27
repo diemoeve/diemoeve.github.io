@@ -3,7 +3,6 @@ title: "HackTheBoo CTF 2025 | Pwn: Rookie Salvation [medium]"
 date: 2025-10-27
 summary: "HackTheBoo 2025 CTF Pwn — Rookie Salvation"
 description: "Reclaiming a freed heap chunk via tcache to rewrite the secret key and unlock the salvation path for the flag."
-weight: 20
 tags:
   - HackTheBox
   - HackTheBoo 2025
