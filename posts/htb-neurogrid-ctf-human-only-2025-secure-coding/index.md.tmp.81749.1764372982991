@@ -1,0 +1,450 @@
+---
+title: "Neurogrid CTF: Human-Only 2025 | Secure Coding"
+date: 2025-11-25
+draft: false
+description: "Secure Coding challenges from Neurogrid CTF: Human-Only 2025"
+tags:
+  - HackTheBox
+  - Neurogrid CTF
+  - Secure Coding
+  - Buffer Overflow
+  - CSRF
+  - Mass Assignment
+categories:
+  - CTF Writeups
+toc:
+  enable: true
+  auto: true
+---
+
+Neurogrid CTF: Human-Only 2025 was a 4-day CTF hosted by HackTheBox. I competed solo as "Legendary Queue" and finished in the **top 4 out of 1337 players**. This post covers the Secure Coding challenges.
+
+<!--more-->
+
+![Neurogrid CTF: Human-Only 2025](CTFTitleBanner.jpg)
+
+![Team Solves Progress](challengesprogress.png)
+
+
+---
+
+## Shugo No Michi's System [medium]
+
+> **Description:** The Shugo no Michi bus ticketing system has a multi-service architecture. The C++ data parser component has some memory issues that need addressing.
+>
+> **Points:** 1000 | **Difficulty:** Medium |**Solves:** 3
+
+This was the hardest challenge in the secure coding category - only 3 players solved it during the competition. The multi-service architecture and strict static analyzer made this particularly tricky.
+
+### Analysis
+
+A complex application with four services: Rails web app, C++ data parser, Python logic tracker, and PostgreSQL. The vulnerability is in the C++ parser (`data_parser/src/main.cpp`).
+
+The struct definition uses a fixed-size buffer:
+
+```cpp
+struct TicketRow {
+  char name_buf[200];           // Fixed-size buffer
+  std::string bus_code;
+  std::string user_email;
+  std::string travel_date;
+  int         seats       = 1;
+  int         start_node  = 0;
+  int         end_node    = 0;
+  long long   total_cents = 0;
+};
+```
+
+When fetching from PostgreSQL, the name is copied without bounds checking:
+
+```cpp
+const char* name = PQgetvalue(res, i, 0);
+std::strcpy(tr.name_buf, name);  // Buffer overflow if name > 200 chars
+```
+
+If the database contains a name longer than 200 characters, this overflows into adjacent struct members, corrupting memory.
+
+### Exploitation
+
+Insert a ticket with a name longer than 200 characters into the database. When the parser fetches it, the `strcpy` overflows, potentially crashing the service or enabling code execution.
+
+### The Fix
+
+Replace all C-style char buffers with `std::string`. The static analyzer was strict - it rejected the code if ANY `char[]` buffers remained.
+
+**Fix 1**: Replace the struct member:
+```cpp
+struct TicketRow {
+  std::string name;             // Safe: dynamic allocation
+  std::string bus_code;
+  // ...
+};
+```
+
+**Fix 2**: Replace strcpy with assignment:
+```cpp
+// Before
+std::strcpy(tr.name_buf, name);
+
+// After
+tr.name = PQgetvalue(res, i, 0);
+```
+
+**Fix 3**: Update JSON serialization:
+```cpp
+// Before
+<< "\"name\":\"" << jesc(r.name_buf) << "\","
+
+// After
+<< "\"name\":\"" << jesc(r.name) << "\","
+```
+
+**Fix 4**: Replace other char buffers too:
+```cpp
+// Unicode escape buffer - before
+char buf[7]; std::snprintf(buf, sizeof(buf), "\\u%04x", c);
+
+// After
+std::ostringstream esc;
+esc << "\\u" << std::hex << std::setfill('0') << std::setw(4) << static_cast<int>(c);
+out += esc.str();
+
+// Network receive buffer - before
+char buf[256]; ::recv(c, buf, sizeof(buf), 0);
+
+// After
+std::string recv_buf(256, '\0');
+::recv(c, recv_buf.data(), recv_buf.size(), 0);
+```
+
+### Vulnerability 2: Authentication Bypass
+
+The Rails web app had a mass assignment vulnerability in registration. Looking at `users_controller.rb`:
+
+```ruby
+def user_params
+  base = [:email, :password, :password_confirmation]
+  extras = (request.format.json? || request.headers['Accept'].to_s.include?('json')) ? [:role] : []
+  params.require(:user).permit(*(base + extras))
+end
+```
+
+JSON requests get `:role` added to permitted params. An attacker can register as admin:
+
+```bash
+curl -X POST http://target/users \
+  -H "Content-Type: application/json" \
+  -d '{"user":{"email":"attacker@test.com","password":"password123","password_confirmation":"password123","role":"admin"}}'
+```
+
+The fix removes `:role` from permitted params entirely and adds a model callback to enforce the default:
+
+```ruby
+# Controller - never permit role
+def user_params
+  params.require(:user).permit(:email, :password, :password_confirmation)
+end
+
+# Model - force default role
+before_validation :set_default_role
+def set_default_role
+  self.role = 'user'
+end
+```
+
+### Vulnerability 3: Pricing Calculation Error
+
+The pricing calculation was broken due to inconsistent grid dimensions across files:
+
+| File | Constant | Value |
+|------|----------|-------|
+| `ticket.rb` | `GRID_COLS` | 12 (wrong) |
+| `tickets_controller.rb` | `GRID_COLS` | 28 (correct) |
+| `logic_tracker_client.rb` | `DEFAULT_COLS` | 12 (wrong) |
+| `map_controller.rb` | `cols` | 28 (correct) |
+
+The map is 28 columns wide, but some files used 12. This caused incorrect node-to-coordinate conversions, resulting in wrong pricing calculations for routes.
+
+The fix standardizes all files to use `GRID_COLS = 28`:
+
+```ruby
+# In ticket.rb
+GRID_COLS = 28
+
+# In logic_tracker_client.rb
+DEFAULT_COLS = 28
+```
+
+### Flag
+
+> Flag: `HTB{SH0GUN_0F_S4F3_M3M0RY}`
+
+---
+
+## Yugen's Choice [medium]
+
+> **Description:** Deep in Kurozan's archives, a printing press processes sealed orders. Requests arrive at a clerk's desk, are inspected and stored, then queued for backend artisans working in a separate chamber. The clerk washes away suspicious characters before storage, but Kenji wonders: does the artisan re-inspect what emerges, or simply trust the archive? And can anyone slip into the unlocked workshop to tamper with the queue directly?
+>
+> **Points:** 975 | **Difficulty:** Medium
+
+### Analysis
+
+A Python Flask application split into frontend and backend services communicating via Redis. Looking at the architecture, the frontend serializes job data and pushes it to Redis, where the backend picks it up and deserializes it.
+
+The frontend in `frontend/app.py` uses pickle for serialization:
+
+```python
+benign = {
+    "name": filename,
+    "submitted_by": session.get("user"),
+    "note": "standard print",
+    "uploaded_path": str(save_path),
+    "submitted_at": datetime.now(timezone.utc).isoformat(),
+}
+data_b64 = base64.b64encode(pickle.dumps(benign, protocol=pickle.HIGHEST_PROTOCOL)).decode()
+enqueue_job(job_id, data_b64)
+```
+
+The backend blindly deserializes whatever comes through:
+
+```python
+def _unpickle(b64_data: str) -> Any:
+    decoded = base64.b64decode(b64_data)
+    return pickle.loads(decoded)  # RCE here
+```
+
+The challenge attempted to mitigate this with a `suspicious_pickle()` function - 67 lines of opcode analysis trying to blocklist dangerous modules like `os`, `subprocess`, `sys`, etc. But pickle is fundamentally unsafe for untrusted data. The provided `exploit.py` demonstrates the attack:
+
+```python
+# Pickle payload that executes os.system()
+final_payload = f"(S'{command}'\nios\nsystem\n.".encode()
+```
+
+### Exploitation
+
+The blocklist approach is flawed because pickle has too many ways to achieve code execution:
+- Different opcodes (INST, GLOBAL, REDUCE)
+- Alternative module paths
+- Gadget chains through standard library classes
+
+The exploit bypasses the blocklist entirely.
+
+### The Fix
+
+The data being serialized is just strings and timestamps - no need for pickle's power. Replace it with JSON:
+
+**Frontend** (`frontend/app.py`):
+```python
+# Before: pickle serialization
+data_b64 = base64.b64encode(pickle.dumps(benign, protocol=pickle.HIGHEST_PROTOCOL)).decode()
+
+# After: JSON serialization
+import json
+data_b64 = base64.b64encode(json.dumps(benign).encode()).decode()
+```
+
+**Backend** (`backend/app.py`):
+```python
+# Before: pickle deserialization
+def _unpickle(b64_data: str) -> Any:
+    decoded = base64.b64decode(b64_data)
+    return pickle.loads(decoded)
+
+# After: JSON deserialization
+def _unpickle(b64_data: str) -> Any:
+    decoded = base64.b64decode(b64_data)
+    return json.loads(decoded.decode('utf-8'))
+```
+
+Remove the 67-line `suspicious_pickle()` function entirely and replace with simple JSON validation:
+
+```python
+try:
+    data = json.loads(raw.decode('utf-8'))
+    if not isinstance(data, dict):
+        return jsonify({"error": "payload must be a JSON object"}), 400
+except (json.JSONDecodeError, UnicodeDecodeError):
+    return jsonify({"error": "payload must be valid JSON"}), 400
+```
+
+JSON only supports basic types (strings, numbers, dicts, lists, booleans, null) - no way to inject code.
+
+### Flag
+
+> Flag: `HTB{7H3_7RU3_9U1D3_70_7H3_P1CKL3_W0RLD}`
+
+---
+
+## Odayaka Waters [easy]
+
+> **Description:** Odayaka Waters is an internal chat application. Something about the registration flow seems off.
+>
+> **Points:** 925 | **Difficulty:** Easy
+
+### Analysis
+
+A Laravel 12 application with role-based access control. The admin endpoints are protected by middleware checking `$user->role`. Looking at the registration controller:
+
+```php
+public function register(Request $request)
+{
+    if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+        return redirect()->route('register');
+    }
+
+    if (count($_POST) !== 4) {
+        return redirect()->route('register')
+            ->with('error', 'Ensure you only have the name, email and password parameter!');
+    }
+
+    $user = User::create([
+        'name'     => $_REQUEST['name'],
+        'email'    => $_REQUEST['email'],
+        'password' => Hash::make($_REQUEST['password']),
+        'role'     => $_REQUEST['role'] ?? 'user',  // VULNERABLE
+    ]);
+}
+```
+
+The developer tried to prevent extra parameters by checking `count($_POST) !== 4`, but reads input from `$_REQUEST` which includes GET parameters. So passing `role=admin` via GET while sending other fields via POST bypasses the check.
+
+The User model has `'role'` in `$fillable`:
+```php
+protected $fillable = ['name','email','password','role'];
+```
+
+### Exploitation
+
+```bash
+POST /register?role=admin HTTP/1.1
+Content-Type: application/x-www-form-urlencoded
+
+name=attacker&email=attacker@test.com&password=password123&_token=XXX
+```
+
+The `$_POST` count is 4 (name, email, password, \_token), but `$_REQUEST['role']` reads `admin` from the query string. User created with admin privileges.
+
+### The Fix
+
+Hardcode the role and use Laravel's validation instead of superglobals:
+
+```php
+public function register(Request $request)
+{
+    $validated = $request->validate([
+        'name'     => ['required', 'string', 'max:255'],
+        'email'    => ['required', 'email', 'max:255', 'unique:users'],
+        'password' => ['required', 'string', 'min:8'],
+    ]);
+
+    $user = User::create([
+        'name'     => $validated['name'],
+        'email'    => $validated['email'],
+        'password' => Hash::make($validated['password']),
+        'role'     => 'user',  // Hardcoded - no user control
+    ]);
+
+    Auth::login($user);
+    $request->session()->regenerate();
+    return redirect()->intended('/waters');
+}
+```
+
+Also remove `'role'` from the model's `$fillable` array for defense in depth:
+
+```php
+protected $fillable = ['name','email','password'];
+```
+
+The fix doesn't try to validate the role input - it simply doesn't accept it. Authorization decisions should never depend on user-controllable data.
+
+### Flag
+
+> Flag: `HTB{CLARITY_IS_THE_KEY_TO_CONFUSION}`
+
+---
+
+## Sakura's Embrace [very easy]
+
+> **Description:** Sakura's Embrace is a Japanese specialty shop. The cart supports mathematical expressions for quantities. The sanitization seems thorough, but is it?
+>
+> **Points:** 975 | **Difficulty:** Very Easy
+
+### Analysis
+
+An Express.js e-commerce application that evaluates mathematical expressions for cart quantities (allowing inputs like "2+3" or "5*2"). The vulnerable code:
+
+```javascript
+function sanitizeExpression(expr) {
+  let s = expr.replace(/\/\/.*$/gm, "").replace(/\/\*[\s\S]*?\*\//g, "");
+  const forbidden = /\b(require|child_process|fs|vm|import|constructor\.constructor|Function)\b/gi;
+  if (forbidden.test(s)) throw new Error("Forbidden token detected");
+  if (/[;{}]/.test(s)) throw new Error("Illegal punctuation");
+  return s.trim().slice(0, 4096);
+}
+
+function _eval(expr) {
+  const cleaned = sanitizeExpression(String(expr));
+  return eval(cleaned);  // RCE
+}
+```
+
+The regex uses word boundaries (`\b`), which can be bypassed with string concatenation.
+
+### Exploitation
+
+```javascript
+// Blocked: fs is a word
+process.getBuiltinModule('fs')
+
+// Bypasses word boundary: 'f'+'s' is not the word "fs"
+process.getBuiltinModule('f'+'s').readFileSync('/flag.txt','utf8')
+```
+
+```bash
+curl -X POST http://target/cart/add \
+  -d "itemId=1" \
+  -d "quantity=process.getBuiltinModule('f'%2B's').readFileSync('/flag.txt','utf8')"
+```
+
+### The Fix
+
+The `package.json` already includes `mathjs` - a hint about the intended solution. Replace `eval()` with a hardened mathjs instance:
+
+```javascript
+import { create, all } from 'mathjs';
+
+const math = create(all);
+
+// Disable dangerous functions
+math.import({
+  'import': function () { throw new Error('Function import is disabled') },
+  'createUnit': function () { throw new Error('Function createUnit is disabled') },
+  'reviver': function () { throw new Error('Function reviver is disabled') }
+}, { override: true });
+
+function safeEval(expr) {
+  try {
+    const result = math.evaluate(String(expr).trim().slice(0, 4096));
+    if (typeof result === 'number' && Number.isFinite(result)) {
+      return result;
+    }
+    return NaN;
+  } catch {
+    return NaN;
+  }
+}
+```
+
+Replace all three calls from `_eval` to `safeEval`:
+- Line 75: `qtyNum = safeEval(\`(${qtyExprRaw})\`);`
+- Line 76: `lineTotal = safeEval(lineExpr);`
+- Line 83: `total = safeEval(formula);`
+
+The mathjs library provides a sandboxed environment with only mathematical operations - no access to `process`, `require`, or the filesystem. Disabling `import`, `createUnit`, and `reviver` addresses known security concerns from the mathjs documentation.
+
+Just using mathjs wasn't enough - the verifier required the dangerous functions to be explicitly disabled. Reading the library's security documentation was essential.
+
+### Flag
+
+> Flag: `HTB{N07_4LL_FL0W3R5_4R3_834U71FUL}`

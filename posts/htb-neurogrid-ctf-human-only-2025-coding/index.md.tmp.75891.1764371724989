@@ -1,0 +1,231 @@
+---
+title: "Neurogrid CTF: Human-Only 2025 | Coding"
+date: 2025-11-25
+draft: false
+description: "Coding challenges from Neurogrid CTF: Human-Only 2025"
+tags:
+  - HackTheBox
+  - Neurogrid CTF
+  - Coding
+  - Algorithms
+  - Dynamic Programming
+  - Graph Theory
+categories:
+  - CTF Writeups
+toc:
+  enable: true
+  auto: true
+---
+
+Neurogrid CTF: Human-Only 2025 was a 4-day CTF hosted by HackTheBox. I competed solo as "Legendary Queue" and finished in the **top 4 out of 1337 players**. This post covers the Coding challenges.
+
+<!--more-->
+
+![Neurogrid CTF: Human-Only 2025](CTFTitleBanner.jpg)
+
+![Team Solves Progress](challengesprogress.png)
+
+
+---
+
+## Blade Master
+
+> **Description:** In the age of still swords, the clans forged their loyalty into iron. Each shrine holds a single blade — humble, ranked, waiting. The disciple's pilgrimage is simple: begin anywhere, end anywhere, but never tread the same road twice. Collect the blades in a rising harmony of power, or watch the road seal behind you forever.
+>
+> **Points:** 975 | **Difficulty:** Hard
+
+### Analysis
+
+This challenge combines graph theory with dynamic programming. We're given a tree with N nodes (up to 25,000), each assigned a rank value. The goal is to find the maximum LIS along any path in the tree.
+
+The naive approach would enumerate all N(N-1)/2 paths and compute LIS for each - clearly too slow. Instead, use DFS with an incremental LIS that supports backtracking. As we traverse from a starting node, we maintain the standard O(N log N) LIS tails array, updating it as we visit each node and restoring it when we backtrack.
+
+The core algorithm:
+
+```c
+void dfs(int node, int parent, int lis_tails[], int *lis_size) {
+    int rank = ranks[node];
+    int pos = lower_bound(lis_tails, *lis_size, rank);
+
+    // Save state for backtracking
+    int old_size = *lis_size;
+    int old_value = (pos < *lis_size) ? lis_tails[pos] : -1;
+
+    // Update LIS
+    if (pos < *lis_size) {
+        lis_tails[pos] = rank;
+    } else {
+        lis_tails[(*lis_size)++] = rank;
+    }
+
+    if (*lis_size > max_blades) max_blades = *lis_size;
+
+    // Recurse to children
+    for (int i = 0; i < graph_size[node]; i++) {
+        if (graph[node][i] != parent) {
+            dfs(graph[node][i], node, lis_tails, lis_size);
+        }
+    }
+
+    // Backtrack
+    if (pos < old_size) lis_tails[pos] = old_value;
+    else (*lis_size)--;
+}
+```
+
+### Exploitation
+
+The real challenge was balancing correctness with performance. Running DFS from every node gives O(N² log N) complexity - too slow for N=25,000. But starting from too few nodes misses optimal paths.
+
+After several iterations (Python TLE'd on tests 8-10, C with all nodes TLE'd on 9-10, C with only leaves gave wrong answers), the solution that passed adapts based on graph size:
+
+```c
+if (n <= 100) {
+    // Small: try all nodes
+    for (int i = 1; i <= n; i++) dfs(i, -1, tails, &size);
+} else if (n <= 500) {
+    // Medium: leaves + degree-2 nodes
+    for (int i = 1; i <= n; i++) {
+        if (graph_size[i] <= 2) dfs(i, -1, tails, &size);
+    }
+} else {
+    // Large: smart selection of ~200 leaves
+    // Prioritize lowest and highest rank leaves
+}
+```
+
+Most optimal paths have at least one leaf endpoint, so focusing on leaves covers most cases. For star-shaped graphs with many leaves, selecting the 100 lowest and 100 highest rank leaves provides good coverage without TLE.
+
+### Flag
+
+> Flag: `HTB{bl4d3_s3qu3nc3_unbr0k3n}`
+
+---
+
+## Fivefold Door
+
+> **Description:** Beneath Ishigaki-tori, the Fivefold Door sleeps—its stone crowded with the beasts of old clans, carved out of order by time and ruin. Only a rising cadence of strength will wake the seal: each sigil stronger than the last. You hold the full sequence. Find the longest ascent the door will still recognize—before the echo fades.
+>
+> **Points:** 950 | **Difficulty:** Medium
+
+### Analysis
+
+A direct application of the classic LIS problem. Given N values (up to 200,000), find the length of the longest strictly increasing subsequence.
+
+The O(N²) DP approach won't work for N=200,000, so we need the O(N log N) solution using binary search. The trick is maintaining a `tails` array where `tails[i]` holds the smallest tail element of all increasing subsequences of length i+1.
+
+For each element, binary search for its position in `tails`:
+- If it's larger than all elements, append it (found longer subsequence)
+- Otherwise, replace the first element >= it (keep smallest possible tails)
+
+### Exploitation
+
+```python
+def longest_increasing_subsequence(n, arr):
+    tails = []
+
+    for num in arr:
+        left, right = 0, len(tails)
+        while left < right:
+            mid = (left + right) // 2
+            if tails[mid] < num:
+                left = mid + 1
+            else:
+                right = mid
+
+        if left == len(tails):
+            tails.append(num)
+        else:
+            tails[left] = num
+
+    return len(tails)
+
+n = int(input())
+arr = list(map(int, input().split()))
+print(longest_increasing_subsequence(n, arr))
+```
+
+The algorithm runs in O(N log N) time with O(N) space. This challenge serves as a foundation for BladeMaster - understanding the tails array and binary search approach is essential for the tree variant.
+
+### Flag
+
+> Flag: `HTB{LIS_0f_th3_f1v3}`
+
+---
+
+## Drumming Shrine
+
+> **Description:** At the heart of Mount Tsukimori lies a forgotten shrine where monks once struck sacred drums. Each night, the drums play the same sequence of beats. Determine if the rhythm is a smaller pattern repeated endlessly.
+>
+> **Points:** 875
+
+### Analysis
+
+Given a sequence of N beats, determine if the entire rhythm can be obtained by repeating a smaller prefix. For example, `[2, 1, 2, 1, 2, 1]` is `[2, 1]` repeated 3 times, so the answer is YES.
+
+The approach is straightforward: check each possible prefix length from 1 to N-1. Only lengths that divide N evenly can produce the full sequence through repetition. For each valid length, verify the prefix repeats correctly using modulo indexing.
+
+### Exploitation
+
+```python
+n = int(input())
+beats = list(map(int, input().split()))
+
+found = False
+for prefix_len in range(1, n):
+    if n % prefix_len == 0:
+        prefix = beats[:prefix_len]
+
+        matches = True
+        for i in range(n):
+            if beats[i] != prefix[i % prefix_len]:
+                matches = False
+                break
+
+        if matches:
+            found = True
+            break
+
+print("YES" if found else "NO")
+```
+
+The optimization of only checking divisors of N significantly reduces the number of candidates. Worst case is still O(N²) when N has many divisors, but in practice this runs fast enough for N ≤ 200,000.
+
+### Flag
+
+> Flag: `HTB{3t3rn4l_sh1nju_p4tt3rn}`
+
+---
+
+## The Paper General's Army
+
+> **Description:** The Paper General commands an origami army. Each fold of the sacred paper doubles the number of soldiers. Calculate the army size after K folds.
+>
+> **Points:** 875
+
+### Analysis
+
+The simplest challenge of the set - pure math. Starting with N paper soldiers, each fold doubles the count. After K folds: `result = N * 2^K`.
+
+Given the constraints could be large (K up to potentially 60+), using `pow(2, K)` with multiplication works but bit shifting is cleaner and faster.
+
+### Exploitation
+
+```python
+T = int(input())
+for _ in range(T):
+    N, K = map(int, input().split())
+    result = N << K  # N * 2^K
+    print(result)
+```
+
+For example:
+- N=3, K=4: 3 << 4 = 3 * 16 = 48
+- N=10, K=2: 10 << 2 = 10 * 4 = 40
+- N=2, K=16: 2 << 16 = 2 * 65536 = 131072
+
+Python handles arbitrary precision integers natively, so no overflow concerns.
+
+### Flag
+
+> Flag: `HTB{th3_f0ld3d_l3g10n_r1s3s_1n_th3_m00nl1ght}`
