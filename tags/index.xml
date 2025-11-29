@@ -1,77 +1,77 @@
 <rss xmlns:atom="http://www.w3.org/2005/Atom" version="2.0">
     <channel>
         <title>Tags - Tag - moeve&#39;s blog</title>
-        <link>http://localhost:1313/tags/</link>
+        <link>https://diemoeve.github.io/tags/</link>
         <description>Tags - Tag - moeve&#39;s blog</description>
-        <generator>Hugo -- gohugo.io</generator><language>en</language><lastBuildDate>Fri, 28 Nov 2025 00:00:00 &#43;0000</lastBuildDate><atom:link href="http://localhost:1313/tags/" rel="self" type="application/rss+xml" /><item>
+        <generator>Hugo -- gohugo.io</generator><language>en</language><lastBuildDate>Fri, 28 Nov 2025 00:00:00 &#43;0000</lastBuildDate><atom:link href="https://diemoeve.github.io/tags/" rel="self" type="application/rss+xml" /><item>
     <title>AES</title>
-    <link>http://localhost:1313/tags/aes/</link>
+    <link>https://diemoeve.github.io/tags/aes/</link>
     <pubDate>Fri, 28 Nov 2025 00:00:00 &#43;0000</pubDate><author>
         <name>moeve</name>
-    </author><guid>http://localhost:1313/tags/aes/</guid>
+    </author><guid>https://diemoeve.github.io/tags/aes/</guid>
     <description><![CDATA[]]></description>
 </item><item>
     <title>AI</title>
-    <link>http://localhost:1313/tags/ai/</link>
+    <link>https://diemoeve.github.io/tags/ai/</link>
     <pubDate>Fri, 28 Nov 2025 00:00:00 &#43;0000</pubDate><author>
         <name>moeve</name>
-    </author><guid>http://localhost:1313/tags/ai/</guid>
+    </author><guid>https://diemoeve.github.io/tags/ai/</guid>
     <description><![CDATA[]]></description>
 </item><item>
     <title>Algorithms</title>
-    <link>http://localhost:1313/tags/algorithms/</link>
+    <link>https://diemoeve.github.io/tags/algorithms/</link>
     <pubDate>Fri, 28 Nov 2025 00:00:00 &#43;0000</pubDate><author>
         <name>moeve</name>
-    </author><guid>http://localhost:1313/tags/algorithms/</guid>
+    </author><guid>https://diemoeve.github.io/tags/algorithms/</guid>
     <description><![CDATA[]]></description>
 </item><item>
     <title>Blockchain</title>
-    <link>http://localhost:1313/tags/blockchain/</link>
+    <link>https://diemoeve.github.io/tags/blockchain/</link>
     <pubDate>Fri, 28 Nov 2025 00:00:00 &#43;0000</pubDate><author>
         <name>moeve</name>
-    </author><guid>http://localhost:1313/tags/blockchain/</guid>
+    </author><guid>https://diemoeve.github.io/tags/blockchain/</guid>
     <description><![CDATA[]]></description>
 </item><item>
     <title>Buffer Overflow</title>
-    <link>http://localhost:1313/tags/buffer-overflow/</link>
+    <link>https://diemoeve.github.io/tags/buffer-overflow/</link>
     <pubDate>Fri, 28 Nov 2025 00:00:00 &#43;0000</pubDate><author>
         <name>moeve</name>
-    </author><guid>http://localhost:1313/tags/buffer-overflow/</guid>
+    </author><guid>https://diemoeve.github.io/tags/buffer-overflow/</guid>
     <description><![CDATA[]]></description>
 </item><item>
     <title>Coding</title>
-    <link>http://localhost:1313/tags/coding/</link>
+    <link>https://diemoeve.github.io/tags/coding/</link>
     <pubDate>Fri, 28 Nov 2025 00:00:00 &#43;0000</pubDate><author>
         <name>moeve</name>
-    </author><guid>http://localhost:1313/tags/coding/</guid>
+    </author><guid>https://diemoeve.github.io/tags/coding/</guid>
     <description><![CDATA[]]></description>
 </item><item>
     <title>Crypto</title>
-    <link>http://localhost:1313/tags/crypto/</link>
+    <link>https://diemoeve.github.io/tags/crypto/</link>
     <pubDate>Fri, 28 Nov 2025 00:00:00 &#43;0000</pubDate><author>
         <name>moeve</name>
-    </author><guid>http://localhost:1313/tags/crypto/</guid>
+    </author><guid>https://diemoeve.github.io/tags/crypto/</guid>
     <description><![CDATA[]]></description>
 </item><item>
     <title>CSRF</title>
-    <link>http://localhost:1313/tags/csrf/</link>
+    <link>https://diemoeve.github.io/tags/csrf/</link>
     <pubDate>Fri, 28 Nov 2025 00:00:00 &#43;0000</pubDate><author>
         <name>moeve</name>
-    </author><guid>http://localhost:1313/tags/csrf/</guid>
+    </author><guid>https://diemoeve.github.io/tags/csrf/</guid>
     <description><![CDATA[]]></description>
 </item><item>
     <title>DeFi</title>
-    <link>http://localhost:1313/tags/defi/</link>
+    <link>https://diemoeve.github.io/tags/defi/</link>
     <pubDate>Fri, 28 Nov 2025 00:00:00 &#43;0000</pubDate><author>
         <name>moeve</name>
-    </author><guid>http://localhost:1313/tags/defi/</guid>
+    </author><guid>https://diemoeve.github.io/tags/defi/</guid>
     <description><![CDATA[]]></description>
 </item><item>
     <title>Deserialization</title>
-    <link>http://localhost:1313/tags/deserialization/</link>
+    <link>https://diemoeve.github.io/tags/deserialization/</link>
     <pubDate>Fri, 28 Nov 2025 00:00:00 &#43;0000</pubDate><author>
         <name>moeve</name>
-    </author><guid>http://localhost:1313/tags/deserialization/</guid>
+    </author><guid>https://diemoeve.github.io/tags/deserialization/</guid>
     <description><![CDATA[]]></description>
 </item></channel>
 </rss>

@@ -1,21 +1,21 @@
 <rss xmlns:atom="http://www.w3.org/2005/Atom" version="2.0">
     <channel>
         <title>Crypto - Tag - moeve&#39;s blog</title>
-        <link>http://localhost:1313/tags/crypto/</link>
+        <link>https://diemoeve.github.io/tags/crypto/</link>
         <description>Crypto - Tag - moeve&#39;s blog</description>
-        <generator>Hugo -- gohugo.io</generator><language>en</language><lastBuildDate>Fri, 28 Nov 2025 00:00:00 &#43;0000</lastBuildDate><atom:link href="http://localhost:1313/tags/crypto/" rel="self" type="application/rss+xml" /><item>
+        <generator>Hugo -- gohugo.io</generator><language>en</language><lastBuildDate>Fri, 28 Nov 2025 00:00:00 &#43;0000</lastBuildDate><atom:link href="https://diemoeve.github.io/tags/crypto/" rel="self" type="application/rss+xml" /><item>
     <title>Neurogrid CTF: Human-Only 2025 | Crypto</title>
-    <link>http://localhost:1313/posts/htb-neurogrid-ctf-human-only-2025-crypto/</link>
+    <link>https://diemoeve.github.io/posts/htb-neurogrid-ctf-human-only-2025-crypto/</link>
     <pubDate>Fri, 28 Nov 2025 00:00:00 &#43;0000</pubDate><author>
         <name>moeve</name>
-    </author><guid>http://localhost:1313/posts/htb-neurogrid-ctf-human-only-2025-crypto/</guid>
-    <description><![CDATA[<p>Neurogrid CTF: Human-Only 2025 was a 4-day CTF hosted by HackTheBox. I competed solo as &ldquo;Legendary Queue&rdquo; and finished in the <strong>top 4 out of 1337 players</strong>. This post covers the Crypto challenges.</p>]]></description>
+    </author><guid>https://diemoeve.github.io/posts/htb-neurogrid-ctf-human-only-2025-crypto/</guid>
+    <description><![CDATA[<p><a href="https://ctf.hackthebox.com/event/details/neurogrid-ctf-human-only-2936" target="_blank" rel="noopener noreferrer">Neurogrid CTF: Human-Only 2025</a> was a 4-day CTF hosted by HackTheBox. I competed solo as &ldquo;Legendary Queue&rdquo; and finished in the <strong>top 4 out of 1337 players</strong>. This post covers the Crypto challenges.</p>]]></description>
 </item><item>
     <title>Hack The Boo CTF 2025 | Crypto</title>
-    <link>http://localhost:1313/posts/htb-hacktheboo-2025-crypto/</link>
+    <link>https://diemoeve.github.io/posts/htb-hacktheboo-2025-crypto/</link>
     <pubDate>Mon, 27 Oct 2025 00:00:00 &#43;0000</pubDate><author>
         <name>moeve</name>
-    </author><guid>http://localhost:1313/posts/htb-hacktheboo-2025-crypto/</guid>
-    <description><![CDATA[<p>Hack The Boo CTF 2025 was a 2-day CTF hosted by HackTheBox. I competed solo as &ldquo;Legendary Queue&rdquo; and finished in the <strong>top 5 out of 2892 players</strong>. This post covers the Crypto challenges.</p>]]></description>
+    </author><guid>https://diemoeve.github.io/posts/htb-hacktheboo-2025-crypto/</guid>
+    <description><![CDATA[<p><a href="https://ctf.hackthebox.com/event/details/hack-the-boo-2025-competition-2842" target="_blank" rel="noopener noreferrer">Hack The Boo CTF 2025</a> was a 2-day CTF hosted by HackTheBox. I competed solo as &ldquo;Legendary Queue&rdquo; and finished in the <strong>top 5 out of 2892 players</strong>. This post covers the Crypto challenges.</p>]]></description>
 </item></channel>
 </rss>
