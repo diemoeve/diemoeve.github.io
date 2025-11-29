@@ -1,8 +1,8 @@
 <rss xmlns:atom="http://www.w3.org/2005/Atom" version="2.0">
     <channel>
-        <title>X86_64 - Tag - moeve&#39;s blog</title>
+        <title>X86_64 - Tag - moeve&#39;s CTF Writeups | Cybersecurity Blog</title>
         <link>https://diemoeve.github.io/tags/x86_64/</link>
-        <description>X86_64 - Tag - moeve&#39;s blog</description>
+        <description>X86_64 - Tag - moeve&#39;s CTF Writeups | Cybersecurity Blog</description>
         <generator>Hugo -- gohugo.io</generator><language>en</language><lastBuildDate>Mon, 27 Oct 2025 00:00:00 &#43;0000</lastBuildDate><atom:link href="https://diemoeve.github.io/tags/x86_64/" rel="self" type="application/rss+xml" /><item>
     <title>Hack The Boo CTF 2025 | Pwn</title>
     <link>https://diemoeve.github.io/posts/htb-hacktheboo-2025-pwn/</link>
